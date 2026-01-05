@@ -18,10 +18,6 @@ export default class MainScene extends Phaser.Scene {
     create() {
         console.log("GAME: Create function started...");
 
-        // We use 'this.scale' to get the actual screen size in pixels
-        const width = this.cameras.main.width;
-        const height = this.cameras.main.height;
-
         // 1. Create a "Green" background using a generic rectangle
         this.cameras.main.setBackgroundColor('#567d46')
 
