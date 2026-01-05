@@ -1,80 +1,194 @@
 import Phaser from 'phaser';
+// Game Scene
 
 // Define what a character looks like
 interface CharacterSprite extends Phaser.Physics.Arcade.Sprite {
     logId: number;
+    logTitle: string;
+    logCategory: string;
+    logRating: number;
 }
 
 export default class MainScene extends Phaser.Scene {
-    // A group to hold all our little people
     characters!: Phaser.Physics.Arcade.Group;
+    // Store a reference to the callback function
+    onCharacterClick?: (id: number, title: string, category: string, rating: number) => void;
 
     constructor() {
         super('MainScene');
     }
 
-    // We removed Preload. We don't need to download images anymore.
-
     create() {
         console.log("GAME: Create function started...");
 
-        // 1. Create a "Green" background using a generic rectangle
-        this.cameras.main.setBackgroundColor('#567d46')
+        // 1. Background
+        this.cameras.main.setBackgroundColor('#567d46');
 
-        // 2. Create the graphics for our character manually
-        // This draws a white circle and saves it as a texture called "dude"
-        const graphics = this.make.graphics({ x: 0, y: 0,});
-        graphics.fillStyle(0xffffff);
-        graphics.fillCircle(16, 16, 16); // Draw a circle
-        graphics.generateTexture('dude', 32, 32); // Save it as 'dude'
+        // 2. Create different character shapes
+        this.createCharacterTextures();
 
         // 3. Create the group for characters
         this.characters = this.physics.add.group();
 
+        // 4. ADD COLLISION - characters bounce off each other!
+        this.physics.add.collider(this.characters, this.characters);
+
         console.log("GAME: Group created. Ready to spawn!");
     }
 
-    // React calls this when a new log is added
-        addCharacter(id: number, xPerc: number, yPerc: number, tint: number) {
+    createCharacterTextures() {
+        const graphics = this.make.graphics({ x: 0, y: 0 });
         
+        // Circle (default)
+        graphics.clear();
+        graphics.fillStyle(0xffffff);
+        graphics.fillCircle(16, 16, 16);
+        graphics.generateTexture('circle', 32, 32);
+
+        // Square (for games)
+        graphics.clear();
+        graphics.fillStyle(0xffffff);
+        graphics.fillRect(0, 0, 32, 32);
+        graphics.generateTexture('square', 32, 32);
+
+        // Triangle (for events)
+        graphics.clear();
+        graphics.fillStyle(0xffffff);
+        graphics.fillTriangle(16, 0, 0, 32, 32, 32);
+        graphics.generateTexture('triangle', 32, 32);
+
+        // Ellipse (for hikes)
+        graphics.clear();
+        graphics.fillStyle(0xffffff);
+        graphics.fillEllipse(16, 16, 5, 16, 8);
+        graphics.generateTexture('ellipse', 32, 32);
+    }
+
+    addCharacter(id: number, xPerc: number, yPerc: number, tint: number, category: string, title: string, rating: number) {
+        
+        //  If characters group not ready yet, try again shortly
         if (!this.characters) {
-            // ... waiting logic (keep this the same) ...
-             this.time.addEvent({
+            this.time.addEvent({
                 delay: 100,
-                callback: () => this.addCharacter(id, xPerc, yPerc, tint),
+                callback: () => this.addCharacter(id, xPerc, yPerc, tint, category, title, rating),
                 loop: false
             });
             return;
         }
 
-        
+        // Convert percentage to actual position
         const x = (xPerc / 100) * this.cameras.main.width;
         const y = (yPerc / 100) * this.cameras.main.height;
 
-        const player = this.characters.create(x, y, 'dude') as CharacterSprite;
+        // Choose shape based on category
+        let texture = 'circle';
+        if (category === 'Game') texture = 'square';
+        if (category === 'Event') texture = 'triangle';
+        if (category === 'Hike') texture = 'ellipse';
+
+        // Create the character sprite
+        const player = this.characters.create(x, y, texture) as CharacterSprite;
         
+        // Store the custom data
         player.logId = id;
+        player.logTitle = title;
+        player.logCategory = category;
+        player.logRating = rating;
+        
+        // Physics properties
         player.setBounce(0.2);
         player.setCollideWorldBounds(true);
-        player.setTint(tint); 
+        player.setTint(tint);
 
-        this.assignRandomWalk(player);
+        // SIZE BASED ON RATING (1-5)
+        const scale = 0.5 + (rating * 0.2); // 0.7 to 1.5 scale
+        player.setScale(scale);
+
+        // Make clickable
+        player.setInteractive();
+        player.on('pointerdown', () => {
+            if (this.onCharacterClick) {
+                this.onCharacterClick(player.logId, player.logTitle, player.logCategory, player.logRating);
+            }
+        });
+
+        // Add hover effect
+        player.on('pointerover', () => {
+            player.setAlpha(0.7);
+        });
+        player.on('pointerout', () => {
+            player.setAlpha(1);
+        });
+
+        // Movement based on category
+        this.assignPersonalityMovement(player, category);
     }
 
-    assignRandomWalk(player: CharacterSprite) {
-        // If player was destroyed (e.g. reset button), stop logic
-        if(!player.active) return;
+    assignPersonalityMovement(player: CharacterSprite, category: string) {
+        if (!player.active) return; // Stop if destroyed
 
-        const speedX = Phaser.Math.Between(-50, 50);
-        const speedY = Phaser.Math.Between(-50, 50);
+        let speedX = 0;
+        let speedY = 0;
+        let delay = 2000;
+
+        switch(category) {
+            case 'Gym':
+                // Fast and energetic
+                speedX = Phaser.Math.Between(-100, 100);
+                speedY = Phaser.Math.Between(-100, 100);
+                delay = 1000;
+                break;
+            
+            case 'Movie':
+                // Slow and wandering
+                speedX = Phaser.Math.Between(-30, 30);
+                speedY = Phaser.Math.Between(-30, 30);
+                delay = 3000;
+                break;
+            
+            case 'Game':
+                // Medium speed with sudden changes
+                speedX = Phaser.Math.Between(-70, 70);
+                speedY = Phaser.Math.Between(-70, 70);
+                delay = 1500;
+                break;
+            
+            case 'Hike':
+                // Diagonal exploration
+                const direction = Phaser.Math.Between(0, 3);
+                const speed = 50;
+                if (direction === 0) { speedX = speed; speedY = speed; }
+                else if (direction === 1) { speedX = -speed; speedY = speed; }
+                else if (direction === 2) { speedX = speed; speedY = -speed; }
+                else { speedX = -speed; speedY = -speed; }
+                delay = 2500;
+                break;
+            
+            default:
+                // Default behavior
+                speedX = Phaser.Math.Between(-50, 50);
+                speedY = Phaser.Math.Between(-50, 50);
+        }
 
         player.setVelocity(speedX, speedY);
 
-        // Reset this logic in 2 seconds
+        // Schedule next direction change
         this.time.addEvent({
-            delay: 2000,
-            callback: () => this.assignRandomWalk(player),
+            delay: delay,
+            callback: () => this.assignPersonalityMovement(player, category),
             loop: false
         });
+    }
+
+    // Method to clear all characters
+    clearAllCharacters() {
+        if (this.characters) {
+            this.characters.clear(true, true); // Remove and destroy
+        }
+    }
+
+    // Method to register click callback from React
+    setCharacterClickCallback(callback: (id: number, title: string, category: string, rating: number) => void) {
+        this.onCharacterClick = callback;
     }
 }

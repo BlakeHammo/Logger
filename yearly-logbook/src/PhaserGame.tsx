@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import MainScene from './game/MainScene';
 
+// The Bridge between React and Phaser
+
 interface LogEntry {
     id: number;
     title: string;
@@ -13,74 +15,104 @@ interface LogEntry {
 
 interface Props {
     logs: LogEntry[];
+    onCharacterClick?: (id: number, title: string, category: string, rating: number) => void;
 }
 
-export default function PhaserGame({ logs }: Props) {
+export default function PhaserGame({ logs, onCharacterClick }: Props) {
     const gameRef = useRef<Phaser.Game | null>(null);
     const sceneRef = useRef<MainScene | null>(null);
+    const spawnedIds = useRef<Set<number>>(new Set());
 
     // 1. Initialize the Game Engine (Run once)
     useEffect(() => {
         const config: Phaser.Types.Core.GameConfig = {
-            type: Phaser.AUTO,
-            parent: 'phaser-container', // Attaches to the div below
+            type: Phaser.AUTO,                          // Auto-detect WebGL/Canvas
+            parent: 'phaser-container',                 // Which div to attach to
             width: '100%',
             height: '100%',
             physics: {
-                default: 'arcade',
+                default: 'arcade',                      // Simple physics engine
                 arcade: {
-                    gravity: { x : 0, y: 0 }, // No gravity (Top down)
+                    gravity: { x: 0, y: 0 },            // No gravity in top-down view
                     debug: false
                 }
             },
-            scene: MainScene
+            scene: MainScene                            // Our game scene
         };
 
         const game = new Phaser.Game(config);
         gameRef.current = game;
 
-        // Wait for the scene to be ready so we can talk to it
         game.events.on('ready', () => {
             const scene = game.scene.getScene('MainScene') as MainScene;
             sceneRef.current = scene;
             
-            // Initial Load of existing logs
-            // We pass it to the scene, the scene handles the "Waiting" if it needs to
-            logs.forEach(log => spawnLog(log));
+            // Set up click callback
+            if (onCharacterClick) {
+                scene.setCharacterClickCallback(onCharacterClick);
+            }
+            
+            // Initial load of existing logs
+            logs.forEach(log => {
+                spawnLog(log);
+                spawnedIds.current.add(log.id);
+            });
         });
 
         return () => {
-            game.destroy(true);
+            game.destroy(true);     // Clean up on unmount
         };
-    }, []);
+    }, []);             // Empty array = run once on mount
 
-    // 2. Helper to spawn a guy
+    // 2. Helper to spawn a character
     const spawnLog = (log: LogEntry) => {
-        if (!sceneRef.current) return;
+        if (!sceneRef.current) return;  // Scene not ready yet
         
         // Determine Color (Tint)
         let color = 0xffffff;
         if (log.category === 'Gym') color = 0xff0000;
         if (log.category === 'Game') color = 0x00ff00;
         if (log.category === 'Movie') color = 0xa020f0;
+        if (log.category === 'Hike') color = 0xffaa00;
+        if (log.category === 'Event') color = 0x00aaff;
 
-        // Check if character already exists to prevent duplicates (simple check)
-        const exists = sceneRef.current.characters?.getChildren().find(
-            (c: any) => c.logId === log.id
+        // Pass all 7 required arguments
+        sceneRef.current.addCharacter(
+            log.id, 
+            log.x, 
+            log.y, 
+            color, 
+            log.category, 
+            log.title, 
+            log.rating
         );
-
-        if (!exists) {
-            sceneRef.current.addCharacter(log.id, log.x, log.y, color);
-        }
     };
 
     // 3. Watch for new logs from React
     useEffect(() => {
         if (sceneRef.current) {
-            // Find logs that aren't in the game yet
-            logs.forEach(log => spawnLog(log));
+            // Find logs that haven't been spawned yet
+            logs.forEach(log => {
+                if (!spawnedIds.current.has(log.id)) {
+                    spawnLog(log);
+                    spawnedIds.current.add(log.id);
+                }
+            });
+
+            // Handle reset (when logs array is empty)
+            if (logs.length === 0) {
+                sceneRef.current.clearAllCharacters();
+                spawnedIds.current.clear();
+            }
         }
     }, [logs]);
+
+    // 4. Update callback when it changes
+    useEffect(() => {
+        if (sceneRef.current && onCharacterClick) {
+            sceneRef.current.setCharacterClickCallback(onCharacterClick);
+        }
+    }, [onCharacterClick]);
 
     return (
         <div 

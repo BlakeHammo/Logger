@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import PhaserGame from './PhaserGame';
+// Main Controller
 
-// Define what a "Log Entry" looks like.
 export interface LogEntry {
   id: number;
   title: string;
@@ -13,49 +13,56 @@ export interface LogEntry {
 
 function App() {
   // --- STATE ---
-  
-  // 1. Load logs from Local Storage (or start empty)
   const [logs, setLogs] = useState<LogEntry[]>(() => {
     const saved = localStorage.getItem('village-logs');
     return saved ? JSON.parse(saved) : [];
   });
   
-  // Form Inputs
   const [inputTitle, setInputTitle] = useState("");
   const [category, setCategory] = useState("Movie");
   const [rating, setRating] = useState(5);
+  
+  // NEW: State for showing character details
+  const [selectedCharacter, setSelectedCharacter] = useState<{
+    id: number;
+    title: string;
+    category: string;
+    rating: number;
+  } | null>(null);
 
   // --- EFFECTS ---
-
-  // Save to Local Storage whenever 'logs' changes
   useEffect(() => {
     localStorage.setItem('village-logs', JSON.stringify(logs));
   }, [logs]);
 
   // --- HANDLERS ---
-
   const handleLog = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // stops page from refreshing
 
     const newLog: LogEntry = {
-      id: Date.now(),
+      id: Date.now(),   // Unique ID using timestamp
       title: inputTitle,
       category: category,
       rating: rating,
-      // Random spawn position (0-100 percentage)
-      x: Math.random() * 80 + 10, 
-      y: Math.random() * 80 + 10 
+      x: Math.random() * 80 + 10, // Random X between 10-90%
+      y: Math.random() * 80 + 10  // Random Y between 10-90%
     };
     
-    setLogs([...logs, newLog]); 
-    setInputTitle(""); 
+    setLogs([...logs, newLog]);   // Add to array (creates new array)
+    setInputTitle("");            // Clear input field
   };
 
   const clearLogs = () => {
     if(confirm("Are you sure you want to delete your village?")) {
         setLogs([]);
+        setSelectedCharacter(null); // Clear selection when resetting
     }
-  }
+  };
+
+  // NEW: Handle character clicks
+  const handleCharacterClick = (id: number, title: string, category: string, rating: number) => {
+    setSelectedCharacter({ id, title, category, rating });
+  };
 
   // --- RENDER ---
   return (
@@ -69,7 +76,8 @@ function App() {
         borderRight: '2px solid #ccc',
         display: 'flex',
         flexDirection: 'column',
-        zIndex: 10 // Keep this on top of the game canvas if they overlap
+        zIndex: 10,
+        color: 'white'
       }}>
         <h2>Yearly Logbook</h2>
         
@@ -127,28 +135,68 @@ function App() {
           </button>
         </form>
 
-        <hr style={{ width: '100%' }} />
+        <hr style={{ width: '100%', margin: '15px 0' }} />
+
+        {/* NEW: Selected Character Details */}
+        {selectedCharacter && (
+          <div style={{
+            padding: '15px',
+            background: '#222',
+            borderRadius: '8px',
+            marginBottom: '15px',
+            border: '2px solid #555'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>Selected Character</h3>
+            <p style={{ margin: '5px 0' }}><strong>Title:</strong> {selectedCharacter.title}</p>
+            <p style={{ margin: '5px 0' }}><strong>Category:</strong> {selectedCharacter.category}</p>
+            <p style={{ margin: '5px 0' }}><strong>Rating:</strong> {'⭐'.repeat(selectedCharacter.rating)}</p>
+            <button 
+              onClick={() => setSelectedCharacter(null)}
+              style={{ 
+                marginTop: '10px', 
+                background: '#444', 
+                color: 'white', 
+                border: 'none', 
+                padding: '5px 10px',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        )}
         
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <h3>History ({logs.length})</h3>
           <ul style={{ paddingLeft: '20px', fontSize: '0.9rem' }}>
             {logs.map(log => (
               <li key={log.id} style={{ marginBottom: '5px' }}>
-                <strong>{log.category}</strong>: {log.title}
+                <strong>{log.category}</strong>: {log.title} {'⭐'.repeat(log.rating)}
               </li>
             ))}
           </ul>
         </div>
 
-        <button onClick={clearLogs} style={{ marginTop: '10px', background: 'red', color: 'white', border: 'none', padding: '5px' }}>
-            Reset Village
+        <button 
+          onClick={clearLogs} 
+          style={{ 
+            marginTop: '10px', 
+            background: 'red', 
+            color: 'white', 
+            border: 'none', 
+            padding: '8px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          Reset Village
         </button>
       </div>
 
       {/* RIGHT SIDE: The Phaser Game */}
       <div style={{ flex: 1, position: 'relative', background: '#000' }}>
-         {/* We pass the logs array into the game component */}
-         <PhaserGame logs={logs} />
+         <PhaserGame logs={logs} onCharacterClick={handleCharacterClick} />
       </div>
 
     </div>
