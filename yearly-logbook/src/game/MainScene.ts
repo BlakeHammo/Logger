@@ -22,7 +22,7 @@ export default class MainScene extends Phaser.Scene {
         console.log("GAME: Create function started...");
 
         // 1. Background
-        this.cameras.main.setBackgroundColor('#567d46');
+        this.cameras.main.setBackgroundColor('#7cbd6b');
 
         // 2. Create different character shapes
         this.createCharacterTextures();
@@ -60,7 +60,7 @@ export default class MainScene extends Phaser.Scene {
         // Ellipse (for hikes)
         graphics.clear();
         graphics.fillStyle(0xffffff);
-        graphics.fillEllipse(16, 16, 5, 16, 8);
+        graphics.fillEllipse(16, 16, 10, 24);
         graphics.generateTexture('ellipse', 32, 32);
     }
 
@@ -96,13 +96,14 @@ export default class MainScene extends Phaser.Scene {
         player.logRating = rating;
         
         // Physics properties
-        player.setBounce(0.2);
+        player.setBounce(1);
         player.setCollideWorldBounds(true);
         player.setTint(tint);
 
         // SIZE BASED ON RATING (1-5)
-        const scale = 0.5 + (rating * 0.2); // 0.7 to 1.5 scale
+        const scale = 0.5 + (rating * 0.5); // 1 to 3 scale
         player.setScale(scale);
+       
 
         // Make clickable
         player.setInteractive();
@@ -161,7 +162,7 @@ export default class MainScene extends Phaser.Scene {
                 else if (direction === 1) { speedX = -speed; speedY = speed; }
                 else if (direction === 2) { speedX = speed; speedY = -speed; }
                 else { speedX = -speed; speedY = -speed; }
-                delay = 2500;
+                delay = 10000;
                 break;
             
             default:

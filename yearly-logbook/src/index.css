@@ -66,21 +66,3 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
-
-
-
-
-
-
-
-
-/* Define the bounce animation */
-@keyframes idle-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-/* A class we will apply to characters */
-.character-sprite {
-  animation: idle-bounce 2s infinite ease-in-out;
-}

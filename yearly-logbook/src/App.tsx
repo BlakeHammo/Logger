@@ -7,6 +7,8 @@ export interface LogEntry {
   title: string;
   category: string;
   rating: number;
+  notes: string;
+  date: string;
   x: number; 
   y: number;
 }
@@ -21,6 +23,7 @@ function App() {
   const [inputTitle, setInputTitle] = useState("");
   const [category, setCategory] = useState("Movie");
   const [rating, setRating] = useState(5);
+  const [notes, setNotes] = useState("");
   
   // NEW: State for showing character details
   const [selectedCharacter, setSelectedCharacter] = useState<{
@@ -44,6 +47,8 @@ function App() {
       title: inputTitle,
       category: category,
       rating: rating,
+      notes: notes,
+      date: new Date().toISOString(),
       x: Math.random() * 80 + 10, // Random X between 10-90%
       y: Math.random() * 80 + 10  // Random Y between 10-90%
     };
@@ -70,54 +75,69 @@ function App() {
       
       {/* LEFT SIDE: The Dashboard */}
       <div style={{ 
-        width: '300px', 
+        width: '15%', 
         padding: '20px', 
         background: '#000000ff', 
-        borderRight: '2px solid #ccc',
+        borderRight: '2px solid #ffffffff',
         display: 'flex',
         flexDirection: 'column',
-        zIndex: 10,
         color: 'white'
       }}>
-        <h2>Yearly Logbook</h2>
+        <h2>Yearly Log</h2>
         
         <form onSubmit={handleLog} style={{ display: 'flex', flexDirection: 'column', gap: '10px'}}>
           <div>
-            <label><strong>Title</strong></label>
+            <div><strong>Title</strong></div>
             <input 
               style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
               value={inputTitle}
               onChange={(e) => setInputTitle(e.target.value)} 
-              placeholder="E.g. Played Elden Ring" 
+              placeholder="Elden Ring" 
               required 
             />
           </div>
           
           <div>
-            <label><strong>Category</strong></label>
+            <div><strong>Category</strong></div>
             <select 
               style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
             >
-              <option value="Movie">Movie/Show</option>
+              <option value="Movie">Movie</option>
               <option value="Game">Video Game</option>
-              <option value="Hike">Hike/Nature</option>
+              <option value="Hike">Hike</option>
               <option value="Gym">Gym/Workout</option>
               <option value="Event">Event</option>
             </select>
           </div>
 
           <div>
-            <label><strong>Rating (1-5)</strong></label>
+            <div><strong>Rating (1-5)</strong></div>
             <input 
-              style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-              type="number" 
-              min="1" max="5" 
+              style={{ width: '100%', boxSizing: 'border-box', cursor: 'pointer', accentColor: 'white'}}
+              type="range" 
+              min="1" max="5"
+              step= "0.5"
               value={rating} 
               onChange={(e) => setRating(Number(e.target.value))} 
             />
+            <div
+              style={{ textAlign: 'center', fontSize: '2rem', boxSizing: 'border-box'}}
+            >{rating}</div>
           </div>
+
+          <div>
+            <div><strong>Notes</strong></div>
+            <textarea 
+              style={{ width: '100%', padding: '8px', boxSizing: 'border-box', resize: 'vertical' }}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)} 
+              placeholder="Additional details..."
+              rows={3}
+            ></textarea>
+          </div>
+
 
           <button 
             type="submit" 
@@ -144,7 +164,7 @@ function App() {
             background: '#222',
             borderRadius: '8px',
             marginBottom: '15px',
-            border: '2px solid #555'
+            border: '2px solid #ffffffff'
           }}>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>Selected Character</h3>
             <p style={{ margin: '5px 0' }}><strong>Title:</strong> {selectedCharacter.title}</p>
