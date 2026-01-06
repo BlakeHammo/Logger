@@ -11,11 +11,12 @@ interface LogEntry {
     rating: number;
     x: number;
     y: number;
+    notes: string;
 }
 
 interface Props {
     logs: LogEntry[];
-    onCharacterClick?: (id: number, title: string, category: string, rating: number) => void;
+    onCharacterClick?: (id: number, title: string, category: string, rating: number, notes: string) => void;
 }
 
 export default function PhaserGame({ logs, onCharacterClick }: Props) {
@@ -84,7 +85,8 @@ export default function PhaserGame({ logs, onCharacterClick }: Props) {
             color, 
             log.category, 
             log.title, 
-            log.rating
+            log.rating,
+            log.notes
         );
     };
 

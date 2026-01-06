@@ -7,12 +7,13 @@ interface CharacterSprite extends Phaser.Physics.Arcade.Sprite {
     logTitle: string;
     logCategory: string;
     logRating: number;
+    logNotes: string;
 }
 
 export default class MainScene extends Phaser.Scene {
     characters!: Phaser.Physics.Arcade.Group;
     // Store a reference to the callback function
-    onCharacterClick?: (id: number, title: string, category: string, rating: number) => void;
+    onCharacterClick?: (id: number, title: string, category: string, rating: number, notes: string) => void;
 
     constructor() {
         super('MainScene');
@@ -64,13 +65,13 @@ export default class MainScene extends Phaser.Scene {
         graphics.generateTexture('ellipse', 32, 32);
     }
 
-    addCharacter(id: number, xPerc: number, yPerc: number, tint: number, category: string, title: string, rating: number) {
+    addCharacter(id: number, xPerc: number, yPerc: number, tint: number, category: string, title: string, rating: number, notes: string) {
         
         //  If characters group not ready yet, try again shortly
         if (!this.characters) {
             this.time.addEvent({
                 delay: 100,
-                callback: () => this.addCharacter(id, xPerc, yPerc, tint, category, title, rating),
+                callback: () => this.addCharacter(id, xPerc, yPerc, tint, category, title, rating, notes),
                 loop: false
             });
             return;
@@ -94,6 +95,7 @@ export default class MainScene extends Phaser.Scene {
         player.logTitle = title;
         player.logCategory = category;
         player.logRating = rating;
+        player.logNotes = notes;
         
         // Physics properties
         player.setBounce(1);
@@ -109,7 +111,7 @@ export default class MainScene extends Phaser.Scene {
         player.setInteractive();
         player.on('pointerdown', () => {
             if (this.onCharacterClick) {
-                this.onCharacterClick(player.logId, player.logTitle, player.logCategory, player.logRating);
+                this.onCharacterClick(player.logId, player.logTitle, player.logCategory, player.logRating, player.logNotes);
             }
         });
 
@@ -189,7 +191,7 @@ export default class MainScene extends Phaser.Scene {
     }
 
     // Method to register click callback from React
-    setCharacterClickCallback(callback: (id: number, title: string, category: string, rating: number) => void) {
+    setCharacterClickCallback(callback: (id: number, title: string, category: string, rating: number, notes: string) => void) {
         this.onCharacterClick = callback;
     }
 }

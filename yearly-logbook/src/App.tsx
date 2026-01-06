@@ -31,6 +31,7 @@ function App() {
     title: string;
     category: string;
     rating: number;
+    notes: string;
   } | null>(null);
 
   // --- EFFECTS ---
@@ -65,8 +66,8 @@ function App() {
   };
 
   // NEW: Handle character clicks
-  const handleCharacterClick = (id: number, title: string, category: string, rating: number) => {
-    setSelectedCharacter({ id, title, category, rating });
+  const handleCharacterClick = (id: number, title: string, category: string, rating: number, notes: string) => {
+    setSelectedCharacter({ id, title, category, rating, notes });
   };
 
   // --- RENDER ---
@@ -170,6 +171,7 @@ function App() {
             <p style={{ margin: '5px 0' }}><strong>Title:</strong> {selectedCharacter.title}</p>
             <p style={{ margin: '5px 0' }}><strong>Category:</strong> {selectedCharacter.category}</p>
             <p style={{ margin: '5px 0' }}><strong>Rating:</strong> {'⭐'.repeat(selectedCharacter.rating)}</p>
+            <p style={{ margin: '5px 0' }}><strong>Notes:</strong> {selectedCharacter.notes}</p>
             <button 
               onClick={() => setSelectedCharacter(null)}
               style={{ 
