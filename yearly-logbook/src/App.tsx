@@ -32,6 +32,7 @@ function App() {
     category: string;
     rating: number;
     notes: string;
+    date: string;
   } | null>(null);
 
   // --- EFFECTS ---
@@ -56,6 +57,7 @@ function App() {
     
     setLogs([...logs, newLog]);   // Add to array (creates new array)
     setInputTitle("");            // Clear input field
+    setNotes("");                 // Clear notes field
   };
 
   const clearLogs = () => {
@@ -65,10 +67,26 @@ function App() {
     }
   };
 
-  // NEW: Handle character clicks
-  const handleCharacterClick = (id: number, title: string, category: string, rating: number, notes: string) => {
-    setSelectedCharacter({ id, title, category, rating, notes });
+  // Handle character clicks - receives just the ID
+  const handleCharacterClick = (id: number) => {
+    const log = logs.find(l => l.id === id);
+    if (log) {
+      setSelectedCharacter(log);
+    }
   };
+
+  // Helper function to format date nicely
+  const formatDate = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
 
   // --- RENDER ---
   return (
@@ -172,6 +190,7 @@ function App() {
             <p style={{ margin: '5px 0' }}><strong>Category:</strong> {selectedCharacter.category}</p>
             <p style={{ margin: '5px 0' }}><strong>Rating:</strong> {'⭐'.repeat(selectedCharacter.rating)}</p>
             <p style={{ margin: '5px 0' }}><strong>Notes:</strong> {selectedCharacter.notes}</p>
+            <p style={{ margin: '5px 0' }}><strong>Date:</strong> {formatDate(selectedCharacter.date)}</p>
             <button 
               onClick={() => setSelectedCharacter(null)}
               style={{ 
