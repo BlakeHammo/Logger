@@ -9,10 +9,10 @@ interface LogEntry {
     title: string;
     category: string;
     rating: number;
-    x: number;
-    y: number;
     notes: string;
     date: string;
+    x: number;
+    y: number;
 }
 
 interface Props {
@@ -78,17 +78,18 @@ export default function PhaserGame({ logs, onCharacterClick }: Props) {
         if (log.category === 'Hike') color = 0xffaa00;
         if (log.category === 'Event') color = 0x00aaff;
 
+        // Convert percentage to pixels
+        const x = (log.x / 100) * sceneRef.current.cameras.main.width;
+        const y = (log.y / 100) * sceneRef.current.cameras.main.height;
+
         // Pass all 7 required arguments
         sceneRef.current.addCharacter(
             log.id, 
-            log.x, 
-            log.y, 
-            color, 
+            x, 
+            y,  
             log.category, 
-            log.title, 
             log.rating,
-            log.notes,
-            log.date
+            color
         );
     };
 

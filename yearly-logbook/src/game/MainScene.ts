@@ -4,11 +4,6 @@ import Phaser from 'phaser';
 // Define what a character looks like
 interface CharacterSprite extends Phaser.Physics.Arcade.Sprite {
     logId: number;
-    logTitle: string;
-    logCategory: string;
-    logRating: number;
-    logNotes: string;
-    logDate: string;
 }
 
 export default class MainScene extends Phaser.Scene {
@@ -66,21 +61,17 @@ export default class MainScene extends Phaser.Scene {
         graphics.generateTexture('ellipse', 32, 32);
     }
 
-    addCharacter(id: number, xPerc: number, yPerc: number, tint: number, category: string, title: string, rating: number, notes: string, date: string) {
+    addCharacter(id: number, x: number, y: number, category: string, rating: number, color: number) {
         
-        //  If characters group not ready yet, try again shortly
+        // If characters group not ready yet, try again shortly
         if (!this.characters) {
             this.time.addEvent({
                 delay: 100,
-                callback: () => this.addCharacter(id, xPerc, yPerc, tint, category, title, rating, notes, date),
+                callback: () => this.addCharacter(id, x, y, category, rating, color),
                 loop: false
             });
             return;
         }
-
-        // Convert percentage to actual position
-        const x = (xPerc / 100) * this.cameras.main.width;
-        const y = (yPerc / 100) * this.cameras.main.height;
 
         // Choose shape based on category
         let texture = 'circle';
@@ -91,18 +82,13 @@ export default class MainScene extends Phaser.Scene {
         // Create the character sprite
         const player = this.characters.create(x, y, texture) as CharacterSprite;
         
-        // Store the custom data
+        // Only store the ID
         player.logId = id;
-        player.logTitle = title;
-        player.logCategory = category;
-        player.logRating = rating;
-        player.logNotes = notes;
-        player.logDate = date;
         
         // Physics properties
         player.setBounce(1);
         player.setCollideWorldBounds(true);
-        player.setTint(tint);
+        player.setTint(color);
 
         // SIZE BASED ON RATING (1-5)
         const scale = 0.5 + (rating * 0.5); // 1 to 3 scale
