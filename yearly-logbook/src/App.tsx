@@ -100,7 +100,8 @@ function App() {
         borderRight: '2px solid #ffffffff',
         display: 'flex',
         flexDirection: 'column',
-        color: 'white'
+        color: 'white',
+        overflow: 'scroll'
       }}>
         <h2>Yearly Log</h2>
         
@@ -208,7 +209,7 @@ function App() {
           </div>
         )}
         
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1}}>
           <h3>History ({logs.length})</h3>
           <ul style={{ paddingLeft: '20px', fontSize: '0.9rem' }}>
             {logs.map(log => (
