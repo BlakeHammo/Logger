@@ -28,18 +28,26 @@ export default function PhaserGame({ logs, onCharacterClick }: Props) {
     // 1. Initialize the Game Engine (Run once)
     useEffect(() => {
         const config: Phaser.Types.Core.GameConfig = {
-            type: Phaser.AUTO,                          // Auto-detect WebGL/Canvas
-            parent: 'phaser-container',                 // Which div to attach to
-            width: '100%',
-            height: '100%',
-            physics: {
-                default: 'arcade',                      // Simple physics engine
-                arcade: {
-                    gravity: { x: 0, y: 0 },            // No gravity in top-down view
-                    debug: false
-                }
+            type: Phaser.AUTO,
+            parent: 'phaser-container',
+
+            // Remove width/height strings
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: '100%',
+                height: '100%',
             },
-            scene: MainScene                            // Our game scene
+
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { x: 0, y: 0 },
+                    debug: false,
+                },
+            },
+
+            scene: MainScene,
         };
 
         const game = new Phaser.Game(config);

@@ -30,7 +30,7 @@ export default class MainScene extends Phaser.Scene {
         // 4. ADD COLLISION - characters bounce off each other!
         this.physics.add.collider(this.characters, this.characters);
 
-        console.log("GAME: Group created. Ready to spawn!");
+        this.game.events.emit('mainscene-ready', this);
     }
 
     createCharacterTextures() {
