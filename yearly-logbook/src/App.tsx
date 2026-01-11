@@ -35,6 +35,9 @@ function App() {
     date: string;
   } | null>(null);
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'details'>('add');
+
   // --- EFFECTS ---
   useEffect(() => {
     localStorage.setItem('village-logs', JSON.stringify(logs));
@@ -72,6 +75,7 @@ function App() {
     const log = logs.find(l => l.id === id);
     if (log) {
       setSelectedCharacter(log);
+      setActiveTab('details');
     }
   };
 
@@ -86,6 +90,13 @@ function App() {
       minute: '2-digit'
     });
   };
+
+
+  const getTabStyle = (tabName: string) => ({
+    background: activeTab === tabName ? '#333' : 'transparent',
+    color: activeTab === tabName ? '#fff' : '#aaa',
+    fontWeight: activeTab === tabName ? 'bold' : 'normal',
+  });
 
 
   // --- RENDER ---
@@ -105,80 +116,127 @@ function App() {
       }}>
         <h2>Yearly Log</h2>
         
-        <form onSubmit={handleLog} style={{ display: 'flex', flexDirection: 'column', gap: '10px'}}>
+        <button onClick={() => {
+            setActiveTab('add'); // or 'history'
+            setSelectedCharacter(null); // Clear selection when leaving details
+          }}
+          style={getTabStyle('add')}
+        >
+          Add Log
+        </button>
+        
+        <button onClick={() => {
+            setActiveTab('history'); // or 'history'
+            setSelectedCharacter(null); // Clear selection when leaving details
+          }}
+          style={getTabStyle('history')}
+        >
+          History
+        </button>
+
+        <button onClick={() => {
+            setActiveTab('details'); // or 'history'
+          }}
+          style={getTabStyle('details')}
+        >
+          Details
+        </button>
+
+      
+        {activeTab === 'add' && ( // -- ADD new log entry --------------------------------------------------------------------------------
           <div>
-            <div><strong>Title</strong></div>
-            <input 
-              style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-              value={inputTitle}
-              onChange={(e) => setInputTitle(e.target.value)} 
-              placeholder="Elden Ring" 
-              required 
-            />
-          </div>
-          
-          <div>
-            <div><strong>Category</strong></div>
-            <select 
-              style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-              value={category} 
-              onChange={(e) => setCategory(e.target.value)}
+            {<form onSubmit={handleLog} style={{ display: 'flex', flexDirection: 'column', gap: '10px'}}>
+            <div>
+              <div><strong>Title</strong></div>
+              <input 
+                style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                value={inputTitle}
+                onChange={(e) => setInputTitle(e.target.value)} 
+                placeholder="Elden Ring" 
+                required 
+              />
+            </div>
+            
+            <div>
+              <div><strong>Category</strong></div>
+              <select 
+                style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                value={category} 
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="Movie">Movie</option>
+                <option value="Game">Video Game</option>
+                <option value="Hike">Hike</option>
+                <option value="Gym">Gym/Workout</option>
+                <option value="Event">Event</option>
+              </select>
+            </div>
+
+            <div>
+              <div><strong>Rating (1-5)</strong></div>
+              <input 
+                style={{ width: '100%', boxSizing: 'border-box', cursor: 'pointer', accentColor: 'white'}}
+                type="range" 
+                min="1" max="5"
+                step= "0.5"
+                value={rating} 
+                onChange={(e) => setRating(Number(e.target.value))} 
+              />
+              <div
+                style={{ textAlign: 'center', fontSize: '2rem', boxSizing: 'border-box'}}
+              >{rating}</div>
+            </div>
+
+            <div>
+              <div><strong>Notes</strong></div>
+              <textarea 
+                style={{ width: '100%', padding: '8px', boxSizing: 'border-box', resize: 'vertical' }}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)} 
+                placeholder="Additional details..."
+                rows={3}
+              ></textarea>
+            </div>
+
+            <button 
+              type="submit" 
+              style={{ 
+                padding: '10px', 
+                background: '#333', 
+                color: 'white', 
+                border: 'none', 
+                cursor: 'pointer',
+                marginTop: '10px',
+                fontWeight: 'bold'
+              }}
             >
-              <option value="Movie">Movie</option>
-              <option value="Game">Video Game</option>
-              <option value="Hike">Hike</option>
-              <option value="Gym">Gym/Workout</option>
-              <option value="Event">Event</option>
-            </select>
+              Spawn Character
+            </button>
+            </form>
+            }   
           </div>
-
+        )}
+        
+        {activeTab === 'history' && ( // -- Log HISTORY --------------------------------------------------------------------------------------------------
           <div>
-            <div><strong>Rating (1-5)</strong></div>
-            <input 
-              style={{ width: '100%', boxSizing: 'border-box', cursor: 'pointer', accentColor: 'white'}}
-              type="range" 
-              min="1" max="5"
-              step= "0.5"
-              value={rating} 
-              onChange={(e) => setRating(Number(e.target.value))} 
-            />
-            <div
-              style={{ textAlign: 'center', fontSize: '2rem', boxSizing: 'border-box'}}
-            >{rating}</div>
+            {<div style={{ flex: 1}}>
+              <h3>History ({logs.length})</h3>
+              <ul style={{ paddingLeft: '20px', fontSize: '0.9rem' }}>
+                {logs.map(log => (
+                  <li key={log.id} style={{ marginBottom: '5px' }}>
+                    <strong>{log.category}</strong>: {log.title} {'⭐'.repeat(log.rating)}
+                  </li>
+                ))}
+              </ul>
+            </div>}
           </div>
-
-          <div>
-            <div><strong>Notes</strong></div>
-            <textarea 
-              style={{ width: '100%', padding: '8px', boxSizing: 'border-box', resize: 'vertical' }}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)} 
-              placeholder="Additional details..."
-              rows={3}
-            ></textarea>
-          </div>
+        )}
 
 
-          <button 
-            type="submit" 
-            style={{ 
-              padding: '10px', 
-              background: '#333', 
-              color: 'white', 
-              border: 'none', 
-              cursor: 'pointer',
-              marginTop: '10px',
-              fontWeight: 'bold'
-            }}
-          >
-            Spawn Character
-          </button>
-        </form>
+        
 
-        <hr style={{ width: '100%', margin: '15px 0' }} />
-
-        {/* NEW: Selected Character Details */}
-        {selectedCharacter && (
+        
+        {selectedCharacter && ( // when character selected, show details
           <div style={{
             padding: '15px',
             background: '#222',
@@ -209,16 +267,7 @@ function App() {
           </div>
         )}
         
-        <div style={{ flex: 1}}>
-          <h3>History ({logs.length})</h3>
-          <ul style={{ paddingLeft: '20px', fontSize: '0.9rem' }}>
-            {logs.map(log => (
-              <li key={log.id} style={{ marginBottom: '5px' }}>
-                <strong>{log.category}</strong>: {log.title} {'⭐'.repeat(log.rating)}
-              </li>
-            ))}
-          </ul>
-        </div>
+        
 
         <button 
           onClick={clearLogs} 
