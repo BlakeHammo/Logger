@@ -24,6 +24,7 @@ function App() {
   const [category, setCategory] = useState("Movie");
   const [rating, setRating] = useState(5);
   const [notes, setNotes] = useState("");
+  const [dateInput, setDateInput] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
   
   // NEW: State for showing character details
   const [selectedCharacter, setSelectedCharacter] = useState<{
@@ -53,7 +54,7 @@ function App() {
       category: category,
       rating: rating,
       notes: notes,
-      date: new Date().toISOString(),
+      date: new Date(dateInput).toISOString(),
       x: Math.random() * 80 + 10, // Random X between 10-90%
       y: Math.random() * 80 + 10  // Random Y between 10-90%
     };
@@ -146,6 +147,19 @@ function App() {
         {activeTab === 'add' && ( // -- ADD new log entry --------------------------------------------------------------------------------
           <div>
             {<form onSubmit={handleLog} style={{ display: 'flex', flexDirection: 'column', gap: '10px'}}>
+            
+            <div>
+              <div><strong>Date</strong></div>
+              <input 
+                style={{ width: '100%', padding: '8px', boxSizing: 'border-box', cursor: 'pointer' }}
+                type="date" 
+                value={dateInput}
+                onChange={(e) => setDateInput(e.target.value)} 
+                required 
+              />
+            </div>
+            
+            
             <div>
               <div><strong>Title</strong></div>
               <input 
@@ -242,6 +256,7 @@ function App() {
             background: '#222',
             borderRadius: '8px',
             marginBottom: '15px',
+            marginTop: '15px',
             border: '2px solid #ffffffff'
           }}>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>Selected Character</h3>
