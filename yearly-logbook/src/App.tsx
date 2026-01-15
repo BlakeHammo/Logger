@@ -93,6 +93,48 @@ function App() {
   };
 
 
+  // Sort logs by date descending
+  const sortedLogs = [...logs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+
+
+  // Group by month, then by day
+  const groupLogsByMonthAndDay = (logs: LogEntry[]) => {
+    const grouped: Record<string, Record<string, LogEntry[]>> = {};
+    
+    const sortedLogs = [...logs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+
+
+    sortedLogs.forEach(log => {
+      const date = new Date(log.date);
+      
+      const monthYear = date.toLocaleDateString('en-US', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+
+      const dayKey = date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        day: 'numeric' 
+      }); 
+      
+      if (!grouped[monthYear]) {
+        grouped[monthYear] = {};
+      }
+
+      if (!grouped[monthYear][dayKey]) {
+        grouped[monthYear][dayKey] = [];
+      }
+      
+      grouped[monthYear][dayKey].push(log);
+    });
+    
+    return grouped;
+  };
+
+
+
   const getTabStyle = (tabName: string) => ({
     background: activeTab === tabName ? '#333' : 'transparent',
     color: activeTab === tabName ? '#fff' : '#aaa',
@@ -233,19 +275,42 @@ function App() {
         
         {activeTab === 'history' && ( // -- Log HISTORY --------------------------------------------------------------------------------------------------
           <div>
-            {<div style={{ flex: 1}}>
-              <h3>History ({logs.length})</h3>
-              <ul style={{ paddingLeft: '20px', fontSize: '0.9rem' }}>
-                {logs.map(log => (
-                  <li key={log.id} style={{ marginBottom: '5px' }}>
-                    <strong>{log.category}</strong>: {log.title} {'⭐'.repeat(log.rating)}
-                  </li>
-                ))}
-              </ul>
-            </div>}
+            <h3>History ({logs.length})</h3>
+            {logs.length === 0 ? (
+              <p style={{ color: '#aaa' }}>No logs yet.</p>
+            ) : (
+              Object.entries(groupLogsByMonthAndDay(logs)).map(([monthYear, days]) => (
+                <div key={monthYear} style={{ marginBottom: '25px' }}>
+                  <h4 style={{ borderBottom: '1px solid #fff', paddingBottom: '5px',marginBottom: '15px'}}>
+                    {monthYear}
+                  </h4>
+                  
+                  {Object.entries(days).map(([dayKey, logsInDay]) => (
+                    <div key={dayKey} style={{ marginBottom: '15px' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '5px',fontSize: '0.95rem'}}>
+                        {dayKey}
+                      </div>
+                      <ul style={{ paddingLeft: '20px', fontSize: '0.9rem', marginTop: '5px' }}>
+                        {logsInDay.map(log => (
+                          <li 
+                            key={log.id}
+                            style={{ marginBottom: '5px', cursor: 'pointer' }}
+                            onClick={() => {
+                              setSelectedCharacter(log);
+                              setActiveTab('details');
+                            }}
+                          >
+                            {log.category}: {log.title} {'⭐'.repeat(Math.floor(log.rating))}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
           </div>
         )}
-
 
         
 
