@@ -93,18 +93,11 @@ function App() {
   };
 
 
-  // Sort logs by date descending
-  const sortedLogs = [...logs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-
-
   // Group by month, then by day
   const groupLogsByMonthAndDay = (logs: LogEntry[]) => {
     const grouped: Record<string, Record<string, LogEntry[]>> = {};
     
     const sortedLogs = [...logs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-
 
     sortedLogs.forEach(log => {
       const date = new Date(log.date);
@@ -126,13 +119,12 @@ function App() {
       if (!grouped[monthYear][dayKey]) {
         grouped[monthYear][dayKey] = [];
       }
-      
+
       grouped[monthYear][dayKey].push(log);
     });
     
     return grouped;
   };
-
 
 
   const getTabStyle = (tabName: string) => ({
