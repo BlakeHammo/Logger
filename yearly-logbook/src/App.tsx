@@ -37,7 +37,7 @@ function App() {
   } | null>(null);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'details' | 'calendar'>('add');
+  const [activeTab, setActiveTab] = useState<'add' | 'entries' | 'details' | 'calendar'>('add');
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -184,12 +184,12 @@ function App() {
         </button>
         
         <button onClick={() => {
-            setActiveTab('history'); 
+            setActiveTab('entries'); 
             setSelectedCharacter(null); // Clear selection when leaving details
           }}
-          style={getTabStyle('history')}
+          style={getTabStyle('entries')}
         >
-          History
+          Entries
         </button>
 
         <button onClick={() => {
@@ -296,11 +296,11 @@ function App() {
           </div>
         )}
         
-        {activeTab === 'history' && ( // -- Log HISTORY --------------------------------------------------------------------------------------------------
+        {activeTab === 'entries' && ( // -- Log HISTORY --------------------------------------------------------------------------------------------------
           <div>
-            <h3>History ({logs.length})</h3>
+            <h3>Entries ({logs.length})</h3>
             {logs.length === 0 ? (
-              <p style={{ color: '#aaa' }}>No logs yet.</p>
+              <p style={{ color: '#aaa' }}>No entries yet.</p>
             ) : (
               Object.entries(groupLogsByMonthAndDay(logs)).map(([monthYear, days]) => (
                 <div key={monthYear} style={{ marginBottom: '25px' }}>
