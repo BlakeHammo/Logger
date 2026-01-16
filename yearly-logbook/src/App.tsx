@@ -37,7 +37,7 @@ function App() {
   } | null>(null);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'details'>('add');
+  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'details' | 'calendar'>('add');
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -92,7 +92,6 @@ function App() {
     });
   };
 
-
   // Group by month, then by day
   const groupLogsByMonthAndDay = (logs: LogEntry[]) => {
     const grouped: Record<string, Record<string, LogEntry[]>> = {};
@@ -134,6 +133,30 @@ function App() {
   });
 
 
+
+  const generateYearCalendar = (year: number) => {
+    const days = [];
+    const startDate = new Date(year, 0, 1); // January 1st of the given year
+    const endDate = new Date(year, 11, 31); // December 31st of the given year
+
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      days.push(new Date(d));
+    }
+
+    return days;
+  };
+
+  const getLogCountByDate = (logs: LogEntry[]) => {
+    const counts: Record<string, number> = {};
+
+    logs.forEach(log => {
+      const dateKey = new Date(log.date).toLocaleDateString('en-US');
+      counts[dateKey] = (counts[dateKey] || 0) + 1;
+    });
+
+    return counts;
+  };
+
   // --- RENDER ---
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
@@ -152,7 +175,7 @@ function App() {
         <h2>Yearly Log</h2>
         
         <button onClick={() => {
-            setActiveTab('add'); // or 'history'
+            setActiveTab('add'); 
             setSelectedCharacter(null); // Clear selection when leaving details
           }}
           style={getTabStyle('add')}
@@ -161,7 +184,7 @@ function App() {
         </button>
         
         <button onClick={() => {
-            setActiveTab('history'); // or 'history'
+            setActiveTab('history'); 
             setSelectedCharacter(null); // Clear selection when leaving details
           }}
           style={getTabStyle('history')}
@@ -170,11 +193,19 @@ function App() {
         </button>
 
         <button onClick={() => {
-            setActiveTab('details'); // or 'history'
+            setActiveTab('details'); 
           }}
           style={getTabStyle('details')}
         >
           Details
+        </button>
+
+        <button onClick={() => {
+            setActiveTab('calendar'); 
+          }}
+          style={getTabStyle('calendar')}
+        >
+          Calendar
         </button>
 
       
@@ -301,6 +332,79 @@ function App() {
                 </div>
               ))
             )}
+          </div>
+        )}
+
+
+        {activeTab === 'calendar' && ( // -- Calendar View --------------------------------------------------------------------------------------------------
+          <div>
+            <h3>Calendar</h3>
+            
+            <div style = {{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: '5px', fontSize: '0.7rem', textAlign: 'center', color: '#aaa' }}>
+              <div>Sun</div>
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+            </div>
+            
+            
+            
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginTop: '15px'}}>
+              
+              { /* Add empty cells for the offset */}
+              {(() => {
+                const firstDay = new Date(2026, 0, 1).getDay(); // January 1, 2026
+                const emptyCells = [];
+                for (let i = 0; i < firstDay; i++) {
+                  emptyCells.push(<div key={`empty-${i}`}></div>);
+                }
+                return emptyCells;
+              })()}
+              
+              
+              {generateYearCalendar(2026).map(date => {
+                const dateKey = date.toLocaleDateString('en-US');
+                const logCount = getLogCountByDate(logs)[dateKey] || 0;
+
+                // Color intensity based on log count
+                let bgColor = '#1a1a1a'; // No logs
+                if (logCount === 1) bgColor = '#0e4429';
+                if (logCount === 2) bgColor = '#006d32';
+                if (logCount === 3) bgColor = '#26a641';
+                if (logCount >= 4) bgColor = '#39d353';
+
+                return (
+                  <div
+                    key = {dateKey}
+                    title = {`${date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}: ${logCount} logs`}
+                    style ={{ aspectRatio: '1', backgroundColor: bgColor, borderRadius: '2px', cursor: logCount > 0 ? 'pointer' : 'default', transition: 'transform 0.2s' }}
+                    onMouseOver = {(e) => {
+                      if (logCount > 0) {
+                        e.currentTarget.style.transform = 'scale(1.2)';
+                      }
+                    }}
+                    
+                    onMouseOut = {(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                    
+                    onClick = {() => {
+                      if (logCount > 0) {
+                        // Find logs for this day and show them
+                        const logsForDay = logs.filter(log =>
+                          new Date(log.date).toLocaleDateString('en-US') === dateKey
+                        );
+
+                        console.log('Logs for', dateKey, logsForDay)
+                      }
+                    }}
+                  />
+                );   
+              })}
+            </div>
           </div>
         )}
 
