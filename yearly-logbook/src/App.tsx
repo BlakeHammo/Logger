@@ -164,314 +164,320 @@ function App() {
 
   // --- RENDER ---
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
-      
-      {/* LEFT SIDE: The Dashboard */}
-      <div style={{ 
-        width: '15%', 
-        padding: '20px', 
-        background: '#000000ff', 
-        borderRight: '2px solid #ffffffff',
-        display: 'flex',
-        flexDirection: 'column',
-        color: 'white',
-        overflow: 'scroll'
-      }}>
-        <h2>Yearly Log</h2>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
+      {/* TOP NAVBAR */}
+        <div style={{
+          height: '60px',
+          background: '#000',
+          borderBottom: '2px solid #ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 20px',
+          gap: '10px'
+        }}>
+          <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>Yearly Logbook</h2>
+
+          {/* Tab buttons will go here - we'll add these in step 2 */}
+          <button onClick={() => {
+              setActiveTab('add'); 
+              setSelectedCharacter(null); // Clear selection when leaving details
+            }}
+            style={getTabStyle('add')}
+          >
+            Add Log
+          </button>
+          
+          <button onClick={() => {
+              setActiveTab('entries'); 
+              setSelectedCharacter(null); // Clear selection when leaving details
+            }}
+            style={getTabStyle('entries')}
+          >
+            Entries
+          </button>
+
+          <button onClick={() => {
+              setActiveTab('details'); 
+            }}
+            style={getTabStyle('details')}
+          >
+            Details
+          </button>
+
+          <button onClick={() => {
+              setActiveTab('calendar');
+              setSelectedCharacter(null); // Clear selection when leaving details 
+            }}
+            style={getTabStyle('calendar')}
+          >
+            Calendar
+          </button>
+
+        </div>
+
+
+
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+        {/* LEFT SIDE: The Dashboard */}
+        <div style={{ 
+          width: '15%', 
+          padding: '20px', 
+          background: '#000000ff', 
+          borderRight: '2px solid #ffffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          color: 'white',
+          overflow: 'scroll'
+        }}>          
         
-        <button onClick={() => {
-            setActiveTab('add'); 
-            setSelectedCharacter(null); // Clear selection when leaving details
-          }}
-          style={getTabStyle('add')}
-        >
-          Add Log
-        </button>
-        
-        <button onClick={() => {
-            setActiveTab('entries'); 
-            setSelectedCharacter(null); // Clear selection when leaving details
-          }}
-          style={getTabStyle('entries')}
-        >
-          Entries
-        </button>
-
-        <button onClick={() => {
-            setActiveTab('details'); 
-          }}
-          style={getTabStyle('details')}
-        >
-          Details
-        </button>
-
-        <button onClick={() => {
-            setActiveTab('calendar');
-            setSelectedCharacter(null); // Clear selection when leaving details 
-          }}
-          style={getTabStyle('calendar')}
-        >
-          Calendar
-        </button>
-
-      
-        {activeTab === 'add' && ( // -- ADD new log entry --------------------------------------------------------------------------------
-          <div>
-            {<form onSubmit={handleLog} style={{ display: 'flex', flexDirection: 'column', gap: '10px'}}>
-            
+          {activeTab === 'add' && ( // -- ADD new log entry --------------------------------------------------------------------------------
             <div>
-              <div><strong>Date</strong></div>
-              <input 
-                style={{ width: '100%', padding: '8px', boxSizing: 'border-box', cursor: 'pointer' }}
-                type="date" 
-                value={dateInput}
-                onChange={(e) => setDateInput(e.target.value)} 
-                required 
-              />
-            </div>
-            
-            
-            <div>
-              <div><strong>Title</strong></div>
-              <input 
-                style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-                value={inputTitle}
-                onChange={(e) => setInputTitle(e.target.value)} 
-                placeholder="Elden Ring" 
-                required 
-              />
-            </div>
-            
-            <div>
-              <div><strong>Category</strong></div>
-              <select 
-                style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-                value={category} 
-                onChange={(e) => setCategory(e.target.value)}
+              {<form onSubmit={handleLog} style={{ display: 'flex', flexDirection: 'column', gap: '10px'}}>
+              
+              <div>
+                <div><strong>Date</strong></div>
+                <input 
+                  style={{ width: '100%', padding: '8px', boxSizing: 'border-box', cursor: 'pointer' }}
+                  type="date" 
+                  value={dateInput}
+                  onChange={(e) => setDateInput(e.target.value)} 
+                  required 
+                />
+              </div>
+              
+              <div>
+                <div><strong>Title</strong></div>
+                <input 
+                  style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                  value={inputTitle}
+                  onChange={(e) => setInputTitle(e.target.value)} 
+                  placeholder="Elden Ring" 
+                  required 
+                />
+              </div>
+              
+              <div>
+                <div><strong>Category</strong></div>
+                <select 
+                  style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                  value={category} 
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value="Movie">Movie</option>
+                  <option value="Game">Video Game</option>
+                  <option value="Hike">Hike</option>
+                  <option value="Gym">Gym/Workout</option>
+                  <option value="Event">Event</option>
+                </select>
+              </div>
+
+              <div>
+                <div><strong>Rating (1-5)</strong></div>
+                <input 
+                  style={{ width: '100%', boxSizing: 'border-box', cursor: 'pointer', accentColor: 'white'}}
+                  type="range" 
+                  min="1" max="5"
+                  step= "0.5"
+                  value={rating} 
+                  onChange={(e) => setRating(Number(e.target.value))} 
+                />
+                <div
+                  style={{ textAlign: 'center', fontSize: '2rem', boxSizing: 'border-box'}}
+                >{rating}</div>
+              </div>
+
+              <div>
+                <div><strong>Notes</strong></div>
+                <textarea 
+                  style={{ width: '100%', padding: '8px', boxSizing: 'border-box', resize: 'vertical' }}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)} 
+                  placeholder="Additional details..."
+                  rows={3}
+                ></textarea>
+              </div>
+
+              <button 
+                type="submit" 
+                style={{ 
+                  padding: '10px', 
+                  background: '#333', 
+                  color: 'white', 
+                  border: 'none', 
+                  cursor: 'pointer',
+                  marginTop: '10px',
+                  fontWeight: 'bold'
+                }}
               >
-                <option value="Movie">Movie</option>
-                <option value="Game">Video Game</option>
-                <option value="Hike">Hike</option>
-                <option value="Gym">Gym/Workout</option>
-                <option value="Event">Event</option>
-              </select>
+                Spawn Character
+              </button>
+              </form>
+              }   
             </div>
-
+          )}
+          
+          {activeTab === 'entries' && ( // -- Log HISTORY --------------------------------------------------------------------------------------------------
             <div>
-              <div><strong>Rating (1-5)</strong></div>
-              <input 
-                style={{ width: '100%', boxSizing: 'border-box', cursor: 'pointer', accentColor: 'white'}}
-                type="range" 
-                min="1" max="5"
-                step= "0.5"
-                value={rating} 
-                onChange={(e) => setRating(Number(e.target.value))} 
-              />
-              <div
-                style={{ textAlign: 'center', fontSize: '2rem', boxSizing: 'border-box'}}
-              >{rating}</div>
-            </div>
-
-            <div>
-              <div><strong>Notes</strong></div>
-              <textarea 
-                style={{ width: '100%', padding: '8px', boxSizing: 'border-box', resize: 'vertical' }}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)} 
-                placeholder="Additional details..."
-                rows={3}
-              ></textarea>
-            </div>
-
-            <button 
-              type="submit" 
-              style={{ 
-                padding: '10px', 
-                background: '#333', 
-                color: 'white', 
-                border: 'none', 
-                cursor: 'pointer',
-                marginTop: '10px',
-                fontWeight: 'bold'
-              }}
-            >
-              Spawn Character
-            </button>
-            </form>
-            }   
-          </div>
-        )}
-        
-        {activeTab === 'entries' && ( // -- Log HISTORY --------------------------------------------------------------------------------------------------
-          <div>
-            <h3>Entries ({logs.length})</h3>
-            {logs.length === 0 ? (
-              <p style={{ color: '#aaa' }}>No entries yet.</p>
-            ) : (
-              Object.entries(groupLogsByMonthAndDay(logs)).map(([monthYear, days]) => (
-                <div key={monthYear} style={{ marginBottom: '25px' }}>
-                  <h4 style={{ borderBottom: '1px solid #fff', paddingBottom: '5px',marginBottom: '15px'}}>
-                    {monthYear}
-                  </h4>
-                  
-                  {Object.entries(days).map(([dayKey, logsInDay]) => (
-                    <div key={dayKey} style={{ marginBottom: '15px' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '5px',fontSize: '0.95rem'}}>
-                        {dayKey}
+              {logs.length === 0 ? (
+                <p style={{ color: '#aaa' }}>No entries yet.</p>
+              ) : (
+                Object.entries(groupLogsByMonthAndDay(logs)).map(([monthYear, days]) => (
+                  <div key={monthYear} style={{ marginBottom: '25px' }}>
+                    <h4 style={{ borderBottom: '1px solid #fff', paddingBottom: '5px',marginBottom: '15px'}}>
+                      {monthYear}
+                    </h4>
+                    
+                    {Object.entries(days).map(([dayKey, logsInDay]) => (
+                      <div key={dayKey} style={{ marginBottom: '15px' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '5px',fontSize: '0.95rem'}}>
+                          {dayKey}
+                        </div>
+                        <ul style={{ paddingLeft: '20px', fontSize: '0.9rem', marginTop: '5px' }}>
+                          {logsInDay.map(log => (
+                            <li 
+                              key={log.id}
+                              style={{ marginBottom: '5px', cursor: 'pointer' }}
+                              onClick={() => {
+                                setSelectedCharacter(log);
+                                setActiveTab('details');
+                              }}
+                            >
+                              {log.category}: {log.title} {'⭐'.repeat(Math.floor(log.rating))}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul style={{ paddingLeft: '20px', fontSize: '0.9rem', marginTop: '5px' }}>
-                        {logsInDay.map(log => (
-                          <li 
-                            key={log.id}
-                            style={{ marginBottom: '5px', cursor: 'pointer' }}
-                            onClick={() => {
-                              setSelectedCharacter(log);
-                              setActiveTab('details');
-                            }}
-                          >
-                            {log.category}: {log.title} {'⭐'.repeat(Math.floor(log.rating))}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-
-        {activeTab === 'calendar' && ( // -- Calendar View --------------------------------------------------------------------------------------------------
-          <div>
-            <h3>Calendar</h3>
-            
-            <div style = {{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: '5px', fontSize: '0.7rem', textAlign: 'center', color: '#aaa' }}>
-              <div>Sun</div>
-              <div>Mon</div>
-              <div>Tue</div>
-              <div>Wed</div>
-              <div>Thu</div>
-              <div>Fri</div>
-              <div>Sat</div>
+                    ))}
+                  </div>
+                ))
+              )}
             </div>
-            
-            
-            
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginTop: '15px'}}>
-              
-              { /* Add empty cells for the offset */}
-              {(() => {
-                const firstDay = new Date(2026, 0, 1).getDay(); // January 1, 2026
-                const emptyCells = [];
-                for (let i = 0; i < firstDay; i++) {
-                  emptyCells.push(<div key={`empty-${i}`}></div>);
-                }
-                return emptyCells;
-              })()}
-              
-              
-              {generateYearCalendar(2026).map(date => {
-                const dateKey = date.toLocaleDateString('en-US');
-                const logCount = getLogCountByDate(logs)[dateKey] || 0;
+          )}
 
-                // Color intensity based on log count
-                let bgColor = '#1a1a1a'; // No logs
-                if (logCount === 1) bgColor = '#0e4429';
-                if (logCount === 2) bgColor = '#006d32';
-                if (logCount === 3) bgColor = '#26a641';
-                if (logCount >= 4) bgColor = '#39d353';
 
-                return (
-                  <div
-                    key = {dateKey}
-                    title = {`${date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}: ${logCount} logs`}
-                    style ={{ aspectRatio: '1', backgroundColor: bgColor, borderRadius: '2px', cursor: logCount > 0 ? 'pointer' : 'default', transition: 'transform 0.2s' }}
-                    onMouseOver = {(e) => {
-                      if (logCount > 0) {
-                        e.currentTarget.style.transform = 'scale(1.2)';
-                      }
-                    }}
-                    
-                    onMouseOut = {(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
-                    
-                    onClick = {() => {
-                      if (logCount > 0) {
-                        // Find logs for this day and show them
-                        const logsForDay = logs.filter(log =>
-                          new Date(log.date).toLocaleDateString('en-US') === dateKey
-                        );
+          {activeTab === 'calendar' && ( // -- Calendar View --------------------------------------------------------------------------------------------------
+            <div>
+              <div style = {{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: '5px', fontSize: '0.7rem', textAlign: 'center', color: '#aaa' }}>
+                <div>Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div>Sat</div>
+              </div>
+              
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginTop: '15px'}}>
+                
+                { /* Add empty cells for the offset */}
+                {(() => {
+                  const firstDay = new Date(2026, 0, 1).getDay(); // January 1, 2026
+                  const emptyCells = [];
+                  for (let i = 0; i < firstDay; i++) {
+                    emptyCells.push(<div key={`empty-${i}`}></div>);
+                  }
+                  return emptyCells;
+                })()}
+                
+                
+                {generateYearCalendar(2026).map(date => {
+                  const dateKey = date.toLocaleDateString('en-US');
+                  const logCount = getLogCountByDate(logs)[dateKey] || 0;
 
-                        console.log('Logs for', dateKey, logsForDay)
-                      }
-                    }}
-                  />
-                );   
-              })}
+                  // Color intensity based on log count
+                  let bgColor = '#1a1a1a'; // No logs
+                  if (logCount === 1) bgColor = '#0e4429';
+                  if (logCount === 2) bgColor = '#006d32';
+                  if (logCount === 3) bgColor = '#26a641';
+                  if (logCount >= 4) bgColor = '#39d353';
+
+                  return (
+                    <div
+                      key = {dateKey}
+                      title = {`${date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}: ${logCount} logs`}
+                      style ={{ aspectRatio: '1', backgroundColor: bgColor, borderRadius: '2px', cursor: logCount > 0 ? 'pointer' : 'default', transition: 'transform 0.2s' }}
+                      onMouseOver = {(e) => {
+                        if (logCount > 0) {
+                          e.currentTarget.style.transform = 'scale(1.2)';
+                        }
+                      }}
+                      
+                      onMouseOut = {(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                      
+                      onClick = {() => {
+                        if (logCount > 0) {
+                          // Find logs for this day and show them
+                          const logsForDay = logs.filter(log =>
+                            new Date(log.date).toLocaleDateString('en-US') === dateKey
+                          );
+
+                          console.log('Logs for', dateKey, logsForDay)
+                        }
+                      }}
+                    />
+                  );   
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        
+          {selectedCharacter && ( // when character selected, show details
+            <div style={{
+              padding: '15px',
+              background: '#222',
+              borderRadius: '8px',
+              marginBottom: '15px',
+              marginTop: '15px',
+              border: '2px solid #ffffffff'
+            }}>
+              <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>Selected Character</h3>
+              <p style={{ margin: '5px 0' }}><strong>Title:</strong> {selectedCharacter.title}</p>
+              <p style={{ margin: '5px 0' }}><strong>Category:</strong> {selectedCharacter.category}</p>
+              <p style={{ margin: '5px 0' }}><strong>Rating:</strong> {'⭐'.repeat(selectedCharacter.rating)}</p>
+              <p style={{ margin: '5px 0' }}><strong>Notes:</strong> {selectedCharacter.notes}</p>
+              <p style={{ margin: '5px 0' }}><strong>Date:</strong> {formatDate(selectedCharacter.date)}</p>
+              <button 
+                onClick={() => setSelectedCharacter(null)}
+                style={{ 
+                  marginTop: '10px', 
+                  background: '#444', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '5px 10px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          )}
+          
+          <button 
+            onClick={clearLogs} 
+            style={{ 
+              marginTop: '10px', 
+              background: 'red', 
+              color: 'white', 
+              border: 'none', 
+              padding: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            Reset Village
+          </button>
+        </div>
 
-        
-        {selectedCharacter && ( // when character selected, show details
-          <div style={{
-            padding: '15px',
-            background: '#222',
-            borderRadius: '8px',
-            marginBottom: '15px',
-            marginTop: '15px',
-            border: '2px solid #ffffffff'
-          }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>Selected Character</h3>
-            <p style={{ margin: '5px 0' }}><strong>Title:</strong> {selectedCharacter.title}</p>
-            <p style={{ margin: '5px 0' }}><strong>Category:</strong> {selectedCharacter.category}</p>
-            <p style={{ margin: '5px 0' }}><strong>Rating:</strong> {'⭐'.repeat(selectedCharacter.rating)}</p>
-            <p style={{ margin: '5px 0' }}><strong>Notes:</strong> {selectedCharacter.notes}</p>
-            <p style={{ margin: '5px 0' }}><strong>Date:</strong> {formatDate(selectedCharacter.date)}</p>
-            <button 
-              onClick={() => setSelectedCharacter(null)}
-              style={{ 
-                marginTop: '10px', 
-                background: '#444', 
-                color: 'white', 
-                border: 'none', 
-                padding: '5px 10px',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              Close
-            </button>
-          </div>
-        )}
-        
-        
+        {/* RIGHT SIDE: The Phaser Game */}
+        <div style={{ flex: 1, position: 'relative', background: '#000' }}>
+          <PhaserGame logs={logs} onCharacterClick={handleCharacterClick} />
+        </div>
 
-        <button 
-          onClick={clearLogs} 
-          style={{ 
-            marginTop: '10px', 
-            background: 'red', 
-            color: 'white', 
-            border: 'none', 
-            padding: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Reset Village
-        </button>
       </div>
-
-      {/* RIGHT SIDE: The Phaser Game */}
-      <div style={{ flex: 1, position: 'relative', background: '#000' }}>
-         <PhaserGame logs={logs} onCharacterClick={handleCharacterClick} />
-      </div>
-
     </div>
   )
 }
