@@ -206,7 +206,8 @@ function App() {
         </button>
 
         <button onClick={() => {
-            setActiveTab('calendar'); 
+            setActiveTab('calendar');
+            setSelectedCharacter(null); // Clear selection when leaving details 
           }}
           style={getTabStyle('calendar')}
         >
