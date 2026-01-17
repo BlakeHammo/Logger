@@ -42,7 +42,12 @@ function App() {
   // --- EFFECTS ---
   useEffect(() => {
     localStorage.setItem('village-logs', JSON.stringify(logs));
-  }, [logs]);
+  }, [logs]); // Save logs to localStorage whenever they change
+
+  useEffect(() => {
+    setDateInput(new Date().toISOString().split('T')[0]);
+  }, []); // Set date input to today on initial load
+
 
   // --- HANDLERS ---
   const handleLog = (e: React.FormEvent) => {
