@@ -18,9 +18,10 @@ interface LogEntry {
 interface Props {
     logs: LogEntry[];
     onCharacterClick?: (id: number) => void;
+    highlightedLogId?: number | null;
 }
 
-export default function PhaserGame({ logs, onCharacterClick }: Props) {
+export default function PhaserGame({ logs, onCharacterClick, highlightedLogId }: Props) {
     const gameRef = useRef<Phaser.Game | null>(null);
     const sceneRef = useRef<MainScene | null>(null);
     const spawnedIds = useRef<Set<number>>(new Set());
@@ -127,6 +128,14 @@ export default function PhaserGame({ logs, onCharacterClick }: Props) {
         }
     }, [onCharacterClick]);
 
+
+    useEffect(() => {        
+        if (sceneRef.current) {
+            sceneRef.current.highlightCharacter(highlightedLogId ?? null);
+        }
+    }, [highlightedLogId]);
+    
+    
     return (
         <div 
             id="phaser-container" 

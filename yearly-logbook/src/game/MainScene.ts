@@ -10,6 +10,7 @@ export default class MainScene extends Phaser.Scene {
     characters!: Phaser.Physics.Arcade.Group;
     // Store a reference to the callback function
     onCharacterClick?: (id: number) => void;
+    highlightedCharacter: Phaser.Physics.Arcade.Sprite | null = null;
 
     constructor() {
         super('MainScene');
@@ -89,6 +90,7 @@ export default class MainScene extends Phaser.Scene {
         player.setBounce(1);
         player.setCollideWorldBounds(true);
         player.setTint(color);
+        player.setData('originalTint', color); // Store original tint for later
 
         // SIZE BASED ON RATING (1-5)
         const scale = 0.5 + (rating * 0.5); // 1 to 3 scale
@@ -170,6 +172,32 @@ export default class MainScene extends Phaser.Scene {
             loop: false
         });
     }
+
+    highlightCharacter(logId: number | null) {
+        // Clear previous highlight
+        if (this.highlightedCharacter) {
+            const originalTint = this.highlightedCharacter.getData('originalTint');
+            this.highlightedCharacter.setTint(originalTint);
+            this.highlightedCharacter = null;
+        }
+
+        if (logId === null) return;
+        
+        
+        // Highlight the new character
+        if (logId !== null) {
+            const character = this.characters.getChildren().find(child => {
+                const sprite = child as CharacterSprite;
+                return sprite.logId === logId;
+            }) as CharacterSprite;
+
+            if (character) {
+                character.setTint(0xffff00); // Yellow highlight
+                this.highlightedCharacter = character;
+            }
+        }
+    }
+
 
     // Method to clear all characters
     clearAllCharacters() {

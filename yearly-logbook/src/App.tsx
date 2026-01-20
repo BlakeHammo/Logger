@@ -25,6 +25,8 @@ function App() {
   const [rating, setRating] = useState(5);
   const [notes, setNotes] = useState("");
   const [dateInput, setDateInput] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
+
+  const [highlightedLogId, setHighlightedLogId] = useState<number | null>(null);
   
   // NEW: State for showing character details
   const [selectedCharacter, setSelectedCharacter] = useState<{
@@ -82,6 +84,7 @@ function App() {
     if (log) {
       setSelectedCharacter(log);
       setActiveTab('details');
+      setHighlightedLogId(id);
     }
   };
 
@@ -338,9 +341,12 @@ function App() {
                             <li 
                               key={log.id}
                               style={{ marginBottom: '5px', cursor: 'pointer' }}
+                              onMouseEnter={() => setHighlightedLogId(log.id)}
+                              onMouseLeave={() => setHighlightedLogId(null)}
                               onClick={() => {
                                 setSelectedCharacter(log);
                                 setActiveTab('details');
+                                setHighlightedLogId(log.id)
                               }}
                             >
                               {log.category}: {log.title} {'⭐'.repeat(Math.floor(log.rating))}
@@ -440,7 +446,10 @@ function App() {
               <p style={{ margin: '5px 0' }}><strong>Notes:</strong> {selectedCharacter.notes}</p>
               <p style={{ margin: '5px 0' }}><strong>Date:</strong> {formatDate(selectedCharacter.date)}</p>
               <button 
-                onClick={() => setSelectedCharacter(null)}
+                onClick={() => {
+                  setSelectedCharacter(null);
+                  setHighlightedLogId(null);
+                }}
                 style={{ 
                   marginTop: '10px', 
                   background: '#444', 
@@ -474,7 +483,10 @@ function App() {
 
         {/* RIGHT SIDE: The Phaser Game */}
         <div style={{ flex: 1, position: 'relative', background: '#000' }}>
-          <PhaserGame logs={logs} onCharacterClick={handleCharacterClick} />
+          <PhaserGame 
+            logs={logs} 
+            onCharacterClick={handleCharacterClick}
+            highlightedLogId={highlightedLogId} />
         </div>
 
       </div>
