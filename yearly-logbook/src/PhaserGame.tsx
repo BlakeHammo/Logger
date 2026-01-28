@@ -18,10 +18,11 @@ interface LogEntry {
 interface Props {
     logs: LogEntry[];
     onCharacterClick?: (id: number) => void;
+    onCharacterHover?: (id: number | null) => void;
     highlightedLogId?: number | null;
 }
 
-export default function PhaserGame({ logs, onCharacterClick, highlightedLogId }: Props) {
+export default function PhaserGame({ logs, onCharacterClick, onCharacterHover, highlightedLogId }: Props) {
     const gameRef = useRef<Phaser.Game | null>(null);
     const sceneRef = useRef<MainScene | null>(null);
     const spawnedIds = useRef<Set<number>>(new Set());
@@ -61,6 +62,11 @@ export default function PhaserGame({ logs, onCharacterClick, highlightedLogId }:
             // Set up click callback
             if (onCharacterClick) {
                 scene.setCharacterClickCallback(onCharacterClick);
+            }
+
+            // Set up hover callback
+            if (onCharacterHover) {
+                scene.setCharacterHoverCallback(onCharacterHover);
             }
             
             // Initial load of existing logs
@@ -128,6 +134,13 @@ export default function PhaserGame({ logs, onCharacterClick, highlightedLogId }:
         }
     }, [onCharacterClick]);
 
+
+    // 5. Update hover callback when it changes
+    useEffect(() => {
+        if (sceneRef.current && onCharacterHover) {
+            sceneRef.current.setCharacterHoverCallback(onCharacterHover);
+        }
+    }, [onCharacterHover]);
 
     useEffect(() => {        
         if (sceneRef.current) {

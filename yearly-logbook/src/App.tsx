@@ -88,6 +88,15 @@ function App() {
     }
   };
 
+  // Handle character hover - receives just the ID
+  const handleCharacterHover = (id: number | null) => {
+    // Only update highlight if nothing is selected
+    if (selectedCharacter === null) {
+      setHighlightedLogId(id);
+    }
+  };
+
+
   // Helper function to format date nicely
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
@@ -486,6 +495,7 @@ function App() {
           <PhaserGame 
             logs={logs} 
             onCharacterClick={handleCharacterClick}
+            onCharacterHover={handleCharacterHover}
             highlightedLogId={highlightedLogId} />
         </div>
 

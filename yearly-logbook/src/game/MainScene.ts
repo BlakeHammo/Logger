@@ -10,6 +10,7 @@ export default class MainScene extends Phaser.Scene {
     characters!: Phaser.Physics.Arcade.Group;
     // Store a reference to the callback function
     onCharacterClick?: (id: number) => void;
+    onCharacterHover?: (id: number | null) => void;
     highlightedCharacter: Phaser.Physics.Arcade.Sprite | null = null;
 
     constructor() {
@@ -107,10 +108,14 @@ export default class MainScene extends Phaser.Scene {
 
         // Add hover effect
         player.on('pointerover', () => {
-            player.setAlpha(0.7);
+            if (this.onCharacterHover) {
+                this.onCharacterHover(player.logId);
+            }
         });
         player.on('pointerout', () => {
-            player.setAlpha(1);
+            if (this.onCharacterHover) {
+                this.onCharacterHover(null);
+            }
         });
 
         // Movement based on category
@@ -209,5 +214,10 @@ export default class MainScene extends Phaser.Scene {
     // Method to register click callback from React
     setCharacterClickCallback(callback: (id: number) => void) {
         this.onCharacterClick = callback;
+    }
+
+    // Method to register hover callback from React
+    setCharacterHoverCallback(callback: (id: number | null) => void) {
+        this.onCharacterHover = callback;
     }
 }
