@@ -25,6 +25,7 @@ function App() {
   const [rating, setRating] = useState(5);
   const [notes, setNotes] = useState("");
   const [dateInput, setDateInput] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const [highlightedLogId, setHighlightedLogId] = useState<number | null>(null);
   
@@ -174,6 +175,15 @@ function App() {
     return counts;
   };
 
+    const isDaySelected = (logsInDay: LogEntry[], selectedDate: string | null) => {
+    if (!selectedDate) return false;
+    
+    // Check if any log in this day group matches the selected date
+    return logsInDay.some(log =>
+      new Date(log.date).toLocaleDateString('en-US') === selectedDate
+    );
+  };
+
   // --- RENDER ---
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
@@ -193,6 +203,7 @@ function App() {
           <button onClick={() => {
               setActiveTab('add'); 
               setSelectedCharacter(null); // Clear selection when leaving details
+              setSelectedDate(null);
             }}
             style={getTabStyle('add')}
           >
@@ -202,6 +213,7 @@ function App() {
           <button onClick={() => {
               setActiveTab('entries'); 
               setSelectedCharacter(null); // Clear selection when leaving details
+              setSelectedDate(null);
             }}
             style={getTabStyle('entries')}
           >
@@ -218,7 +230,8 @@ function App() {
 
           <button onClick={() => {
               setActiveTab('calendar');
-              setSelectedCharacter(null); // Clear selection when leaving details 
+              setSelectedCharacter(null); // Clear selection when leaving details
+              setSelectedDate(null); 
             }}
             style={getTabStyle('calendar')}
           >
@@ -340,30 +353,49 @@ function App() {
                       {monthYear}
                     </h4>
                     
-                    {Object.entries(days).map(([dayKey, logsInDay]) => (
-                      <div key={dayKey} style={{ marginBottom: '15px' }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '5px',fontSize: '0.95rem'}}>
-                          {dayKey}
-                        </div>
-                        <ul style={{ paddingLeft: '20px', fontSize: '0.9rem', marginTop: '5px' }}>
-                          {logsInDay.map(log => (
-                            <li 
-                              key={log.id}
-                              style={{ marginBottom: '5px', cursor: 'pointer' }}
-                              onMouseEnter={() => setHighlightedLogId(log.id)}
-                              onMouseLeave={() => setHighlightedLogId(null)}
-                              onClick={() => {
-                                setSelectedCharacter(log);
-                                setActiveTab('details');
-                                setHighlightedLogId(log.id)
-                              }}
-                            >
-                              {log.category}: {log.title} {'⭐'.repeat(Math.floor(log.rating))}
-                            </li>
+                    {Object.entries(days).map(([dayKey, logsInDay]) => {
+                      const isSelected = isDaySelected(logsInDay, selectedDate);
+                      return (
+                        <div 
+                          key={dayKey} 
+                          style={{ 
+                            marginBottom: '15px',
+                            paddingLeft: '5px',
+                            border: isSelected ? '2px solid #ffffff' : '2px solid transparent',
+                            backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                            borderRadius: '8px',
+                            transition: 'all 0.3s' 
+                          }}
+                        >
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            marginBottom: '5px',
+                            fontSize: '0.95rem',
+                            color: isSelected ? '#ffffff' : 'inherit'
+                          }}>
+                            {dayKey}
+                          </div>
+                          <ul style={{ paddingLeft: '20px', fontSize: '0.9rem', marginTop: '5px' }}>
+                            {logsInDay.map(log => (
+                              <li 
+                                key={log.id}
+                                style={{ marginBottom: '5px', cursor: 'pointer' }}
+                                onMouseEnter={() => setHighlightedLogId(log.id)}
+                                onMouseLeave={() => setHighlightedLogId(null)}
+                                onClick={() => {
+                                  setSelectedCharacter(log);
+                                  setActiveTab('details');
+                                  setHighlightedLogId(log.id)
+                                  setSelectedDate(null);
+                                }}
+                              >
+                                {log.category}: {log.title} {'⭐'.repeat(Math.floor(log.rating))}
+                              </li>
                           ))}
                         </ul>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))
               )}
@@ -429,7 +461,8 @@ function App() {
                             new Date(log.date).toLocaleDateString('en-US') === dateKey
                           );
 
-                          console.log('Logs for', dateKey, logsForDay)
+                          setSelectedDate(dateKey);
+                          setActiveTab('entries');
                         }
                       }}
                     />
