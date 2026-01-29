@@ -457,10 +457,6 @@ function App() {
                       onClick = {() => {
                         if (logCount > 0) {
                           // Find logs for this day and show them
-                          const logsForDay = logs.filter(log =>
-                            new Date(log.date).toLocaleDateString('en-US') === dateKey
-                          );
-
                           setSelectedDate(dateKey);
                           setActiveTab('entries');
                         }
