@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PhaserGame from './PhaserGame';
 // Main Controller
 
@@ -26,8 +26,11 @@ function App() {
   const [notes, setNotes] = useState("");
   const [dateInput, setDateInput] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  
 
   const [highlightedLogId, setHighlightedLogId] = useState<number | null>(null);
+
+  const highlightedDayRef = useRef<HTMLDivElement | null>(null);
   
   // NEW: State for showing character details
   const [selectedCharacter, setSelectedCharacter] = useState<{
@@ -50,6 +53,13 @@ function App() {
   useEffect(() => {
     setDateInput(new Date().toISOString().split('T')[0]);
   }, []); // Set date input to today on initial load
+
+  useEffect(() => {
+    // Scroll to highlighted day when selectedDate changes
+    if (selectedDate && highlightedDayRef.current) {
+      highlightedDayRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [selectedDate]);
 
 
   // --- HANDLERS ---
@@ -357,7 +367,8 @@ function App() {
                       const isSelected = isDaySelected(logsInDay, selectedDate);
                       return (
                         <div 
-                          key={dayKey} 
+                          key={dayKey}
+                          ref={isSelected ? highlightedDayRef : null} //attach a reference if selected
                           style={{ 
                             marginBottom: '15px',
                             paddingLeft: '5px',
