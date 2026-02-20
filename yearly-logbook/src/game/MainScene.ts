@@ -1,223 +1,162 @@
 import Phaser from 'phaser';
-// Game Scene
+import type { Category } from '../types';
+import { CATEGORY_CONFIG } from '../categoryConfig';
+import type { MovementProfile } from '../categoryConfig';
 
-// Define what a character looks like
 interface CharacterSprite extends Phaser.Physics.Arcade.Sprite {
-    logId: number;
+    logId: string;  // UUID string
 }
 
 export default class MainScene extends Phaser.Scene {
     characters!: Phaser.Physics.Arcade.Group;
-    // Store a reference to the callback function
-    onCharacterClick?: (id: number) => void;
-    onCharacterHover?: (id: number | null) => void;
-    highlightedCharacter: Phaser.Physics.Arcade.Sprite | null = null;
+
+    private onCharacterClickRef: ((id: string) => void) | null = null;
+    private onCharacterHoverRef: ((id: string | null) => void) | null = null;
+    private highlightedCharacter: CharacterSprite | null = null;
 
     constructor() {
         super('MainScene');
     }
 
     create() {
-        console.log("GAME: Create function started...");
-
-        // 1. Background
         this.cameras.main.setBackgroundColor('#7cbd6b');
-
-        // 2. Create different character shapes
         this.createCharacterTextures();
-
-        // 3. Create the group for characters
         this.characters = this.physics.add.group();
-
-        // 4. ADD COLLISION - characters bounce off each other!
         this.physics.add.collider(this.characters, this.characters);
 
+        // Signal to PhaserGame that the scene is fully ready
         this.game.events.emit('mainscene-ready', this);
     }
 
     createCharacterTextures() {
-        const graphics = this.make.graphics({ x: 0, y: 0 });
-        
-        // Circle (default)
-        graphics.clear();
-        graphics.fillStyle(0xffffff);
-        graphics.fillCircle(16, 16, 16);
-        graphics.generateTexture('circle', 32, 32);
+        const g = this.make.graphics({ x: 0, y: 0 });
 
-        // Square (for games)
-        graphics.clear();
-        graphics.fillStyle(0xffffff);
-        graphics.fillRect(0, 0, 32, 32);
-        graphics.generateTexture('square', 32, 32);
+        g.fillStyle(0xffffff);
+        g.fillCircle(16, 16, 16);
+        g.generateTexture('circle', 32, 32);
 
-        // Triangle (for events)
-        graphics.clear();
-        graphics.fillStyle(0xffffff);
-        graphics.fillTriangle(16, 0, 0, 32, 32, 32);
-        graphics.generateTexture('triangle', 32, 32);
+        g.clear();
+        g.fillStyle(0xffffff);
+        g.fillRect(0, 0, 32, 32);
+        g.generateTexture('square', 32, 32);
 
-        // Ellipse (for hikes)
-        graphics.clear();
-        graphics.fillStyle(0xffffff);
-        graphics.fillEllipse(16, 16, 10, 24);
-        graphics.generateTexture('ellipse', 32, 32);
+        g.clear();
+        g.fillStyle(0xffffff);
+        g.fillTriangle(16, 0, 0, 32, 32, 32);
+        g.generateTexture('triangle', 32, 32);
+
+        g.clear();
+        g.fillStyle(0xffffff);
+        g.fillEllipse(16, 16, 10, 24);
+        g.generateTexture('ellipse', 32, 32);
     }
 
-    addCharacter(id: number, x: number, y: number, category: string, rating: number, color: number) {
-        
-        // If characters group not ready yet, try again shortly
-        if (!this.characters) {
-            this.time.addEvent({
-                delay: 100,
-                callback: () => this.addCharacter(id, x, y, category, rating, color),
-                loop: false
-            });
-            return;
-        }
+    addCharacter(id: string, x: number, y: number, category: Category, rating: number, color: number) {
+        const { texture } = CATEGORY_CONFIG[category];
 
-        // Choose shape based on category
-        let texture = 'circle';
-        if (category === 'Game') texture = 'square';
-        if (category === 'Event') texture = 'triangle';
-        if (category === 'Hike') texture = 'ellipse';
+        const sprite = this.characters.create(x, y, texture) as CharacterSprite;
+        sprite.logId = id;
+        sprite.setBounce(1);
+        sprite.setCollideWorldBounds(true);
+        sprite.setTint(color);
+        sprite.setData('originalTint', color);
 
-        // Create the character sprite
-        const player = this.characters.create(x, y, texture) as CharacterSprite;
-        
-        // Only store the ID
-        player.logId = id;
-        
-        // Physics properties
-        player.setBounce(1);
-        player.setCollideWorldBounds(true);
-        player.setTint(color);
-        player.setData('originalTint', color); // Store original tint for later
+        // Scale: rating 1 → 1.0, rating 5 → 3.0
+        const scale = 0.5 + rating * 0.5;
+        sprite.setScale(scale);
 
-        // SIZE BASED ON RATING (1-5)
-        const scale = 0.5 + (rating * 0.5); // 1 to 3 scale
-        player.setScale(scale);
-       
+        sprite.setInteractive();
+        sprite.on('pointerdown', () => this.onCharacterClickRef?.(sprite.logId));
+        sprite.on('pointerover', () => this.onCharacterHoverRef?.(sprite.logId));
+        sprite.on('pointerout',  () => this.onCharacterHoverRef?.(null));
 
-        // Make clickable
-        player.setInteractive();
-        player.on('pointerdown', () => {
-            if (this.onCharacterClick) {
-                this.onCharacterClick(player.logId);
-            }
-        });
-
-        // Add hover effect
-        player.on('pointerover', () => {
-            if (this.onCharacterHover) {
-                this.onCharacterHover(player.logId);
-            }
-        });
-        player.on('pointerout', () => {
-            if (this.onCharacterHover) {
-                this.onCharacterHover(null);
-            }
-        });
-
-        // Movement based on category
-        this.assignPersonalityMovement(player, category);
+        this.assignPersonalityMovement(sprite, CATEGORY_CONFIG[category].movement);
     }
 
-    assignPersonalityMovement(player: CharacterSprite, category: string) {
-        if (!player.active) return; // Stop if destroyed
+    assignPersonalityMovement(sprite: CharacterSprite, movement: MovementProfile) {
+        if (!sprite.active) return;
 
         let speedX = 0;
         let speedY = 0;
         let delay = 2000;
 
-        switch(category) {
-            case 'Gym':
-                // Fast and energetic
+        switch (movement) {
+            case 'energetic':
                 speedX = Phaser.Math.Between(-100, 100);
                 speedY = Phaser.Math.Between(-100, 100);
                 delay = 1000;
                 break;
-            
-            case 'Movie':
-                // Slow and wandering
+            case 'wandering':
                 speedX = Phaser.Math.Between(-30, 30);
                 speedY = Phaser.Math.Between(-30, 30);
                 delay = 3000;
                 break;
-            
-            case 'Game':
-                // Medium speed with sudden changes
+            case 'erratic':
                 speedX = Phaser.Math.Between(-70, 70);
                 speedY = Phaser.Math.Between(-70, 70);
                 delay = 1500;
                 break;
-            
-            case 'Hike':
-                // Diagonal exploration
-                const direction = Phaser.Math.Between(0, 3);
-                const speed = 50;
-                if (direction === 0) { speedX = speed; speedY = speed; }
-                else if (direction === 1) { speedX = -speed; speedY = speed; }
-                else if (direction === 2) { speedX = speed; speedY = -speed; }
-                else { speedX = -speed; speedY = -speed; }
+            case 'explorer': {
+                const dir = Phaser.Math.Between(0, 3);
+                const spd = 50;
+                speedX = dir % 2 === 0 ? spd : -spd;
+                speedY = dir < 2 ? spd : -spd;
                 delay = 10000;
                 break;
-            
+            }
             default:
-                // Default behavior
                 speedX = Phaser.Math.Between(-50, 50);
                 speedY = Phaser.Math.Between(-50, 50);
         }
 
-        player.setVelocity(speedX, speedY);
+        sprite.setVelocity(speedX, speedY);
 
-        // Schedule next direction change
-        this.time.addEvent({
-            delay: delay,
-            callback: () => this.assignPersonalityMovement(player, category),
-            loop: false
+        // Store the timer on the sprite so it can be cancelled on clear
+        const timer = this.time.addEvent({
+            delay,
+            callback: () => this.assignPersonalityMovement(sprite, movement),
+            loop: false,
         });
+        sprite.setData('movementTimer', timer);
     }
 
-    highlightCharacter(logId: number | null) {
-        // Clear previous highlight
+    highlightCharacter(logId: string | null) {
         if (this.highlightedCharacter) {
-            const originalTint = this.highlightedCharacter.getData('originalTint');
-            this.highlightedCharacter.setTint(originalTint);
+            const original = this.highlightedCharacter.getData('originalTint');
+            this.highlightedCharacter.setTint(original);
             this.highlightedCharacter = null;
         }
 
         if (logId === null) return;
-        
-        
-        // Highlight the new character
-        if (logId !== null) {
-            const character = this.characters.getChildren().find(child => {
-                const sprite = child as CharacterSprite;
-                return sprite.logId === logId;
-            }) as CharacterSprite;
 
-            if (character) {
-                character.setTint(0xffff00); // Yellow highlight
-                this.highlightedCharacter = character;
-            }
+        const found = this.characters.getChildren().find(
+            child => (child as CharacterSprite).logId === logId
+        ) as CharacterSprite | undefined;
+
+        if (found) {
+            found.setTint(0xffff00);
+            this.highlightedCharacter = found;
         }
     }
 
-
-    // Method to clear all characters
     clearAllCharacters() {
-        if (this.characters) {
-            this.characters.clear(true, true); // Remove and destroy
-        }
+        if (!this.characters) return;
+
+        // Cancel every pending movement timer before destroying sprites
+        this.characters.getChildren().forEach(child => {
+            const timer = child.getData('movementTimer') as Phaser.Time.TimerEvent | undefined;
+            timer?.destroy();
+        });
+
+        this.highlightedCharacter = null;
+        this.characters.clear(true, true);
     }
 
-    // Method to register click callback from React
-    setCharacterClickCallback(callback: (id: number) => void) {
-        this.onCharacterClick = callback;
+    setCharacterClickCallback(cb: (id: string) => void) {
+        this.onCharacterClickRef = cb;
     }
 
-    // Method to register hover callback from React
-    setCharacterHoverCallback(callback: (id: number | null) => void) {
-        this.onCharacterHover = callback;
+    setCharacterHoverCallback(cb: (id: string | null) => void) {
+        this.onCharacterHoverRef = cb;
     }
 }

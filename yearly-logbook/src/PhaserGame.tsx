@@ -1,157 +1,103 @@
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import MainScene from './game/MainScene';
-
-// The Bridge between React and Phaser
-
-interface LogEntry {
-    id: number;
-    title: string;
-    category: string;
-    rating: number;
-    notes: string;
-    date: string;
-    x: number;
-    y: number;
-}
+import type { LogEntry, CharacterState } from './types';
+import { CATEGORY_CONFIG } from './categoryConfig';
 
 interface Props {
     logs: LogEntry[];
-    onCharacterClick?: (id: number) => void;
-    onCharacterHover?: (id: number | null) => void;
-    highlightedLogId?: number | null;
+    characters: CharacterState[];
+    onCharacterClick?: (id: string) => void;
+    onCharacterHover?: (id: string | null) => void;
+    highlightedLogId?: string | null;
 }
 
-export default function PhaserGame({ logs, onCharacterClick, onCharacterHover, highlightedLogId }: Props) {
-    const gameRef = useRef<Phaser.Game | null>(null);
-    const sceneRef = useRef<MainScene | null>(null);
-    const spawnedIds = useRef<Set<number>>(new Set());
+export default function PhaserGame({ logs, characters, onCharacterClick, onCharacterHover, highlightedLogId }: Props) {
+    const gameRef    = useRef<Phaser.Game | null>(null);
+    const sceneRef   = useRef<MainScene | null>(null);
+    const spawnedIds = useRef<Set<string>>(new Set());
 
-    // 1. Initialize the Game Engine (Run once)
+    // Use refs for callbacks so Phaser always calls the latest version
+    // without needing to re-register on every render.
+    const onClickRef = useRef(onCharacterClick);
+    const onHoverRef = useRef(onCharacterHover);
+    useEffect(() => { onClickRef.current = onCharacterClick; });
+    useEffect(() => { onHoverRef.current = onCharacterHover; });
+
+    // 1. Initialise the Phaser game once
     useEffect(() => {
         const config: Phaser.Types.Core.GameConfig = {
             type: Phaser.AUTO,
             parent: 'phaser-container',
-
-            // Remove width/height strings
             scale: {
                 mode: Phaser.Scale.RESIZE,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
                 width: '100%',
                 height: '100%',
             },
-
             physics: {
                 default: 'arcade',
-                arcade: {
-                    gravity: { x: 0, y: 0 },
-                    debug: false,
-                },
+                arcade: { gravity: { x: 0, y: 0 }, debug: false },
             },
-
             scene: MainScene,
         };
 
         const game = new Phaser.Game(config);
         gameRef.current = game;
 
-        game.events.on('ready', () => {
-            const scene = game.scene.getScene('MainScene') as MainScene;
+        // Listen for the scene's own ready signal (emitted at end of create())
+        // so we're guaranteed the scene is fully initialised before using it.
+        game.events.on('mainscene-ready', (scene: MainScene) => {
             sceneRef.current = scene;
-            
-            // Set up click callback
-            if (onCharacterClick) {
-                scene.setCharacterClickCallback(onCharacterClick);
-            }
 
-            // Set up hover callback
-            if (onCharacterHover) {
-                scene.setCharacterHoverCallback(onCharacterHover);
-            }
-            
-            // Initial load of existing logs
-            logs.forEach(log => {
-                spawnLog(log);
-                spawnedIds.current.add(log.id);
-            });
+            // Wire callbacks via refs — no re-registration needed on re-renders
+            scene.setCharacterClickCallback((id) => onClickRef.current?.(id));
+            scene.setCharacterHoverCallback((id) => onHoverRef.current?.(id));
         });
 
         return () => {
-            game.destroy(true);     // Clean up on unmount
+            game.destroy(true);
+            gameRef.current = null;
+            sceneRef.current = null;
+            spawnedIds.current.clear();
         };
-    }, []);             // Empty array = run once on mount
+    }, []);
 
-    // 2. Helper to spawn a character
-    const spawnLog = (log: LogEntry) => {
-        if (!sceneRef.current) return;  // Scene not ready yet
-        
-        // Determine Color (Tint)
-        let color = 0xffffff;
-        if (log.category === 'Gym') color = 0xff0000;
-        if (log.category === 'Game') color = 0x00ff00;
-        if (log.category === 'Movie') color = 0xa020f0;
-        if (log.category === 'Hike') color = 0xffaa00;
-        if (log.category === 'Event') color = 0x00aaff;
-
-        // Convert percentage to pixels
-        const x = (log.x / 100) * sceneRef.current.cameras.main.width;
-        const y = (log.y / 100) * sceneRef.current.cameras.main.height;
-
-        // Pass all 7 required arguments
-        sceneRef.current.addCharacter(
-            log.id, 
-            x, 
-            y,  
-            log.category, 
-            log.rating,
-            color
-        );
-    };
-
-    // 3. Watch for new logs from React
+    // 2. Spawn new characters when the logs/characters arrays change
     useEffect(() => {
-        if (sceneRef.current) {
-            // Find logs that haven't been spawned yet
-            logs.forEach(log => {
-                if (!spawnedIds.current.has(log.id)) {
-                    spawnLog(log);
-                    spawnedIds.current.add(log.id);
-                }
-            });
+        const scene = sceneRef.current;
+        if (!scene) return;
 
-            // Handle reset (when logs array is empty)
-            if (logs.length === 0) {
-                sceneRef.current.clearAllCharacters();
-                spawnedIds.current.clear();
-            }
+        // Reset
+        if (logs.length === 0) {
+            scene.clearAllCharacters();
+            spawnedIds.current.clear();
+            return;
         }
-    }, [logs]);
 
-    // 4. Update callback when it changes
+        logs.forEach(log => {
+            if (spawnedIds.current.has(log.id)) return;
+
+            const charState = characters.find(c => c.logId === log.id);
+            if (!charState) return;
+
+            const { color } = CATEGORY_CONFIG[log.category];
+            const x = (charState.x / 100) * scene.cameras.main.width;
+            const y = (charState.y / 100) * scene.cameras.main.height;
+
+            scene.addCharacter(log.id, x, y, log.category, log.rating, color);
+            spawnedIds.current.add(log.id);
+        });
+    }, [logs, characters]);
+
+    // 3. Sync highlight with Phaser
     useEffect(() => {
-        if (sceneRef.current && onCharacterClick) {
-            sceneRef.current.setCharacterClickCallback(onCharacterClick);
-        }
-    }, [onCharacterClick]);
-
-
-    // 5. Update hover callback when it changes
-    useEffect(() => {
-        if (sceneRef.current && onCharacterHover) {
-            sceneRef.current.setCharacterHoverCallback(onCharacterHover);
-        }
-    }, [onCharacterHover]);
-
-    useEffect(() => {        
-        if (sceneRef.current) {
-            sceneRef.current.highlightCharacter(highlightedLogId ?? null);
-        }
+        sceneRef.current?.highlightCharacter(highlightedLogId ?? null);
     }, [highlightedLogId]);
-    
-    
+
     return (
-        <div 
-            id="phaser-container" 
+        <div
+            id="phaser-container"
             style={{ width: '100%', height: '100%', overflow: 'hidden' }}
         />
     );
