@@ -120,6 +120,15 @@ export default class MainScene extends Phaser.Scene {
         sprite.setData('movementTimer', timer);
     }
 
+    // Dims characters that are not in visibleIds via alpha (not tint), so the
+    // highlight system (which owns the tint channel) remains fully independent.
+    applyVisibilityFilter(visibleIds: Set<string> | null) {
+        this.characters.getChildren().forEach(child => {
+            const sprite = child as CharacterSprite;
+            sprite.setAlpha(visibleIds === null || visibleIds.has(sprite.logId) ? 1 : 0.15);
+        });
+    }
+
     highlightCharacter(logId: string | null) {
         if (this.highlightedCharacter) {
             const original = this.highlightedCharacter.getData('originalTint');
