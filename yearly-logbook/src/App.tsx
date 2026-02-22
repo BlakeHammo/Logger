@@ -38,10 +38,58 @@ function App() {
   const highlightedDayRef = useRef<HTMLDivElement | null>(null);
   const currentYear = new Date().getFullYear();
 
+  // --- PANEL RESIZE STATE ---
+  const [panelWidth, setPanelWidth] = useState<number>(() => {
+    const saved = localStorage.getItem('panel-width');
+    return saved ? Number(saved) : 300;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const isDragging = useRef(false);
+  const dragStart  = useRef({ x: 0, width: 0 });
+
   // --- EFFECTS ---
   useEffect(() => {
     localStorage.setItem('village-logs', JSON.stringify(logs));
   }, [logs]);
+
+  useEffect(() => {
+    localStorage.setItem('panel-width', String(panelWidth));
+  }, [panelWidth]);
+
+  // Document-level listeners for panel drag. Registered once — the ref
+  // keeps isDragging current without needing these in the dependency array.
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      const delta = e.clientX - dragStart.current.x;
+      const clamped = Math.max(180, Math.min(700, dragStart.current.width + delta));
+      setPanelWidth(clamped);
+    };
+
+    const onUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, []);
+
+  const onResizeStart = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    dragStart.current = { x: e.clientX, width: panelWidth };
+    setIsResizing(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  };
 
   useEffect(() => {
     localStorage.setItem('village-characters', JSON.stringify(characters));
@@ -266,14 +314,17 @@ function App() {
 
         {/* LEFT SIDE: Dashboard */}
         <div style={{
-          width: '15%',
+          width: `${panelWidth}px`,
+          minWidth: '180px',
+          maxWidth: '700px',
+          flexShrink: 0,
           padding: '20px',
           background: '#000',
-          borderRight: '2px solid #fff',
           display: 'flex',
           flexDirection: 'column',
           color: 'white',
           overflow: 'auto',
+          boxSizing: 'border-box',
         }}>
 
           {/* ADD TAB */}
@@ -624,8 +675,27 @@ function App() {
           </button>
         </div>
 
+        {/* RESIZE HANDLE */}
+        <div
+          onMouseDown={onResizeStart}
+          style={{
+            width: '5px',
+            flexShrink: 0,
+            cursor: 'col-resize',
+            background: isResizing ? '#555' : '#222',
+            borderLeft: '1px solid #333',
+            borderRight: '1px solid #333',
+            transition: 'background 0.15s',
+            zIndex: 10,
+          }}
+        />
+
         {/* RIGHT SIDE: Phaser Game */}
-        <div style={{ flex: 1, position: 'relative', background: '#000' }}>
+        <div style={{ flex: 1, position: 'relative', background: '#000', overflow: 'hidden' }}>
+          {/* Transparent overlay during drag — prevents the canvas swallowing mouse events */}
+          {isResizing && (
+            <div style={{ position: 'absolute', inset: 0, zIndex: 10, cursor: 'col-resize' }} />
+          )}
           <PhaserGame
             logs={logs}
             characters={characters}
