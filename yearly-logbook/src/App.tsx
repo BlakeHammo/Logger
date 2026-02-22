@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import PhaserGame from './PhaserGame';
 import type { LogEntry, CharacterState, Category } from './types';
 import { CATEGORY_CONFIG } from './categoryConfig';
+import { DualRangeSlider } from './components/DualRangeSlider';
 
 function App() {
   // --- STATE ---
@@ -452,56 +453,41 @@ function App() {
 
                 {/* Rating range */}
                 <div>
-                  <div style={{ color: '#aaa', marginBottom: '2px' }}>
+                  <div style={{ color: '#aaa', marginBottom: '6px', fontSize: '0.75rem' }}>
                     Rating: {filterRatingMin} – {filterRatingMax}
                   </div>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <span style={{ color: '#aaa', fontSize: '0.7rem' }}>Min</span>
-                    <input
-                      type="range" min="1" max="5" step="0.5"
-                      value={filterRatingMin}
-                      onChange={e => {
-                        const val = Number(e.target.value);
-                        setFilterRatingMin(val);
-                        if (val > filterRatingMax) setFilterRatingMax(val);
-                      }}
-                      style={{ flex: 1, accentColor: 'white', cursor: 'pointer' }}
-                    />
-                    <span style={{ color: '#aaa', fontSize: '0.7rem' }}>Max</span>
-                    <input
-                      type="range" min="1" max="5" step="0.5"
-                      value={filterRatingMax}
-                      onChange={e => {
-                        const val = Number(e.target.value);
-                        setFilterRatingMax(val);
-                        if (val < filterRatingMin) setFilterRatingMin(val);
-                      }}
-                      style={{ flex: 1, accentColor: 'white', cursor: 'pointer' }}
-                    />
-                  </div>
+                  <DualRangeSlider
+                    min={1} max={5} step={0.5}
+                    valueMin={filterRatingMin}
+                    valueMax={filterRatingMax}
+                    onChangeMin={setFilterRatingMin}
+                    onChangeMax={setFilterRatingMax}
+                  />
                 </div>
 
-                {/* Date range */}
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                {/* Date range — stacked so it fits at any panel width */}
+                <div style={{ color: '#aaa',display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.75rem' }}>
+                  Date Range:
                   <input
                     type="date"
                     value={filterDateFrom}
                     onChange={e => setFilterDateFrom(e.target.value)}
                     style={{
-                      flex: 1, background: '#222', color: '#fff',
-                      border: '1px solid #555', padding: '3px 4px',
-                      borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer',
+                      width: '100%', boxSizing: 'border-box',
+                      background: '#222', color: '#fff',
+                      border: '1px solid #555', padding: '3px 6px',
+                      borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer',
                     }}
                   />
-                  <span style={{ color: '#aaa' }}>→</span>
                   <input
                     type="date"
                     value={filterDateTo}
                     onChange={e => setFilterDateTo(e.target.value)}
                     style={{
-                      flex: 1, background: '#222', color: '#fff',
-                      border: '1px solid #555', padding: '3px 4px',
-                      borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer',
+                      width: '100%', boxSizing: 'border-box',
+                      background: '#222', color: '#fff',
+                      border: '1px solid #555', padding: '3px 6px',
+                      borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer',
                     }}
                   />
                 </div>

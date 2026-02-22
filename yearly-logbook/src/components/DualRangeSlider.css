@@ -1,0 +1,44 @@
+/* Both inputs cover the full slider area but only their thumbs are interactive.
+   This stops the top input from swallowing clicks meant for the bottom one. */
+
+.drs-input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  pointer-events: none;   /* track is inert … */
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* … only the thumb hitbox responds to mouse events */
+.drs-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: all;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.drs-input::-moz-range-thumb {
+  pointer-events: all;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  border: none;
+}
+
+/* Remove the default focus ring — we have custom visuals */
+.drs-input:focus {
+  outline: none;
+}
