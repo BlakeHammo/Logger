@@ -1,21 +1,32 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import PhaserGame from './PhaserGame';
-import type { LogEntry, CharacterState, Category } from './types';
+import type { LogEntry, Category } from './types';
 import { CATEGORY_CONFIG } from './categoryConfig';
 import { DualRangeSlider } from './components/DualRangeSlider';
+import { useLogStore } from './hooks/useLogStore';
+import { useFilters } from './hooks/useFilters';
+import { usePanelResize } from './hooks/usePanelResize';
 
 function App() {
+  // --- HOOKS ---
+  const { logs, characters, addEntry, clearAll } = useLogStore();
+  const {
+    filterTitle,      setFilterTitle,
+    filterCategories, toggleCategoryFilter,
+    filterRatingMin,  setFilterRatingMin,
+    filterRatingMax,  setFilterRatingMax,
+    filterDateFrom,   setFilterDateFrom,
+    filterDateTo,     setFilterDateTo,
+    filteredLogs,
+    visibleLogIds,
+    isFilterActive,
+    groupedLogs,
+    clearFilters,
+    clearDateFilters,
+  } = useFilters(logs);
+  const { panelWidth, isResizing, onResizeStart } = usePanelResize();
+
   // --- STATE ---
-  const [logs, setLogs] = useState<LogEntry[]>(() => {
-    const saved = localStorage.getItem('village-logs');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [characters, setCharacters] = useState<CharacterState[]>(() => {
-    const saved = localStorage.getItem('village-characters');
-    return saved ? JSON.parse(saved) : [];
-  });
-
   const [inputTitle, setInputTitle] = useState('');
   const [category, setCategory] = useState<Category>('Movie');
   const [rating, setRating] = useState(5);
@@ -28,74 +39,10 @@ function App() {
 
   const [activeTab, setActiveTab] = useState<'add' | 'entries' | 'details' | 'calendar'>('add');
 
-  // --- FILTER STATE ---
-  const [filterTitle,      setFilterTitle]      = useState('');
-  const [filterCategories, setFilterCategories] = useState<Category[]>([]);
-  const [filterRatingMin,  setFilterRatingMin]  = useState<number>(1);
-  const [filterRatingMax,  setFilterRatingMax]  = useState<number>(5);
-  const [filterDateFrom,   setFilterDateFrom]   = useState('');
-  const [filterDateTo,     setFilterDateTo]     = useState('');
-
   const highlightedDayRef = useRef<HTMLDivElement | null>(null);
   const currentYear = new Date().getFullYear();
 
-  // --- PANEL RESIZE STATE ---
-  const [panelWidth, setPanelWidth] = useState<number>(() => {
-    const saved = localStorage.getItem('panel-width');
-    return saved ? Number(saved) : 300;
-  });
-  const [isResizing, setIsResizing] = useState(false);
-  const isDragging = useRef(false);
-  const dragStart  = useRef({ x: 0, width: 0 });
-
   // --- EFFECTS ---
-  useEffect(() => {
-    localStorage.setItem('village-logs', JSON.stringify(logs));
-  }, [logs]);
-
-  useEffect(() => {
-    localStorage.setItem('panel-width', String(panelWidth));
-  }, [panelWidth]);
-
-  // Document-level listeners for panel drag. Registered once — the ref
-  // keeps isDragging current without needing these in the dependency array.
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const delta = e.clientX - dragStart.current.x;
-      const clamped = Math.max(180, Math.min(700, dragStart.current.width + delta));
-      setPanelWidth(clamped);
-    };
-
-    const onUp = () => {
-      if (!isDragging.current) return;
-      isDragging.current = false;
-      setIsResizing(false);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-  }, []);
-
-  const onResizeStart = (e: React.MouseEvent) => {
-    isDragging.current = true;
-    dragStart.current = { x: e.clientX, width: panelWidth };
-    setIsResizing(true);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    e.preventDefault();
-  };
-
-  useEffect(() => {
-    localStorage.setItem('village-characters', JSON.stringify(characters));
-  }, [characters]);
-
   useEffect(() => {
     if (selectedDate && highlightedDayRef.current) {
       highlightedDayRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -105,34 +52,20 @@ function App() {
   // --- HANDLERS ---
   const handleLog = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const id = crypto.randomUUID();
-
-    const newLog: LogEntry = {
-      id,
+    addEntry({
       title: inputTitle.trim(),
       category,
       rating,
       notes,
       date: new Date(dateInput).toISOString(),
-    };
-
-    const newCharacter: CharacterState = {
-      logId: id,
-      x: Math.random() * 80 + 10,
-      y: Math.random() * 80 + 10,
-    };
-
-    setLogs(prev => [...prev, newLog]);
-    setCharacters(prev => [...prev, newCharacter]);
+    });
     setInputTitle('');
     setNotes('');
   };
 
   const clearLogs = () => {
     if (confirm('Are you sure you want to delete your village?')) {
-      setLogs([]);
-      setCharacters([]);
+      clearAll();
       setSelectedCharacter(null);
       setHighlightedLogId(null);
     }
@@ -153,86 +86,7 @@ function App() {
     }
   };
 
-  // --- FILTER HELPERS ---
-  const toggleCategoryFilter = (cat: Category) => {
-    setFilterCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
-    );
-  };
-
-  const clearFilters = () => {
-    setFilterTitle('');
-    setFilterCategories([]);
-    setFilterRatingMin(1);
-    setFilterRatingMax(5);
-    setFilterDateFrom('');
-    setFilterDateTo('');
-  };
-
-  // --- HELPERS ---
-  const formatDate = (isoString: string) => {
-    return new Date(isoString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   // --- MEMOISED DERIVED DATA ---
-
-  // All four filter predicates applied simultaneously.
-  // An empty/default value for a field means "no restriction" for that axis.
-  const filteredLogs = useMemo(() => {
-    const dateRangeValid =
-      !filterDateFrom || !filterDateTo || filterDateFrom <= filterDateTo;
-
-    return logs.filter(log => {
-      if (filterTitle.trim() &&
-          !log.title.toLowerCase().includes(filterTitle.trim().toLowerCase())) return false;
-      if (filterCategories.length > 0 && !filterCategories.includes(log.category)) return false;
-      if (log.rating < filterRatingMin || log.rating > filterRatingMax) return false;
-      const logDay = log.date.slice(0, 10);
-      if (dateRangeValid && filterDateFrom && logDay < filterDateFrom) return false;
-      if (dateRangeValid && filterDateTo   && logDay > filterDateTo)   return false;
-      return true;
-    });
-  }, [logs, filterTitle, filterCategories, filterRatingMin, filterRatingMax, filterDateFrom, filterDateTo]);
-
-  const visibleLogIds = useMemo(
-    () => new Set(filteredLogs.map(l => l.id)),
-    [filteredLogs]
-  );
-
-  const isFilterActive = useMemo(() =>
-    filterTitle.trim() !== '' ||
-    filterCategories.length > 0 ||
-    filterRatingMin !== 1 ||
-    filterRatingMax !== 5 ||
-    filterDateFrom !== '' ||
-    filterDateTo !== ''
-  , [filterTitle, filterCategories, filterRatingMin, filterRatingMax, filterDateFrom, filterDateTo]);
-
-  // groupedLogs derives from filteredLogs so the Entries list narrows automatically.
-  // logCountByDate keeps using raw logs — the calendar is navigational, not filtered.
-  const groupedLogs = useMemo(() => {
-    const grouped: Record<string, Record<string, LogEntry[]>> = {};
-    const sorted = [...filteredLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-    sorted.forEach(log => {
-      const date = new Date(log.date);
-      const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      const dayKey = date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
-
-      if (!grouped[monthYear]) grouped[monthYear] = {};
-      if (!grouped[monthYear][dayKey]) grouped[monthYear][dayKey] = [];
-      grouped[monthYear][dayKey].push(log);
-    });
-
-    return grouped;
-  }, [filteredLogs]);
-
   const logCountByDate = useMemo(() => {
     const counts: Record<string, number> = {};
     logs.forEach(log => {
@@ -257,7 +111,13 @@ function App() {
     [currentYear]
   );
 
-  // --- UI HELPERS ---
+  // --- HELPERS ---
+  const formatDate = (isoString: string) =>
+    new Date(isoString).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+
   const getTabStyle = (tabName: string) => ({
     background: activeTab === tabName ? '#333' : 'transparent',
     color: activeTab === tabName ? '#fff' : '#aaa',
@@ -466,7 +326,7 @@ function App() {
                 </div>
 
                 {/* Date range — stacked so it fits at any panel width */}
-                <div style={{ color: '#aaa',display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.75rem' }}>
+                <div style={{ color: '#aaa', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.75rem' }}>
                   Date Range:
                   <input
                     type="date"
@@ -638,8 +498,7 @@ function App() {
                           setSelectedDate(dateKey);
                           setActiveTab('entries');
                           // Clear date filters so they don't hide the target day
-                          setFilterDateFrom('');
-                          setFilterDateTo('');
+                          clearDateFilters();
                         }
                       }}
                     />
