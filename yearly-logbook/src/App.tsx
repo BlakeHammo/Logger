@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import PhaserGame from './PhaserGame';
-import type { LogEntry, Category } from './types';
+import type { LogEntry } from './types';
 import { useLogStore } from './hooks/useLogStore';
 import { useFilters } from './hooks/useFilters';
 import { usePanelResize } from './hooks/usePanelResize';
@@ -30,11 +30,6 @@ function App() {
   const { panelWidth, isResizing, onResizeStart } = usePanelResize();
 
   // --- STATE ---
-  const [inputTitle, setInputTitle] = useState('');
-  const [category, setCategory] = useState<Category>('Movie');
-  const [rating, setRating] = useState(5);
-  const [notes, setNotes] = useState('');
-  const [dateInput, setDateInput] = useState(new Date().toISOString().split('T')[0]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const [selectedCharacter, setSelectedCharacter] = useState<LogEntry | null>(null);
@@ -70,11 +65,8 @@ function App() {
   );
 
   // --- HANDLERS ---
-  const handleLog = (e: React.FormEvent) => {
-    e.preventDefault();
-    addEntry({ title: inputTitle.trim(), category, rating, notes, date: new Date(dateInput).toISOString() });
-    setInputTitle('');
-    setNotes('');
+  const handleLog = (entry: Omit<LogEntry, 'id'>) => {
+    addEntry(entry);
   };
 
   const clearLogs = () => {
@@ -139,14 +131,7 @@ function App() {
         }}>
 
           {activeTab === 'add' && (
-            <AddLogForm
-              inputTitle={inputTitle}   setInputTitle={setInputTitle}
-              category={category}       setCategory={setCategory}
-              rating={rating}           setRating={setRating}
-              notes={notes}             setNotes={setNotes}
-              dateInput={dateInput}     setDateInput={setDateInput}
-              onSubmit={handleLog}
-            />
+            <AddLogForm onSubmit={handleLog} />
           )}
 
           {activeTab === 'entries' && (
