@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import MainScene from './game/MainScene';
 import type { LogEntry, CharacterState } from './types';
-import { CATEGORY_CONFIG } from './categoryConfig';
 
 interface Props {
     logs: LogEntry[];
@@ -86,11 +85,10 @@ export default function PhaserGame({ logs, characters, onCharacterClick, onChara
             const charState = characters.find(c => c.logId === log.id);
             if (!charState) return;
 
-            const { color } = CATEGORY_CONFIG[log.category];
             const x = (charState.x / 100) * scene.cameras.main.width;
             const y = (charState.y / 100) * scene.cameras.main.height;
 
-            scene.addCharacter(log.id, x, y, log.category, log.rating, color);
+            scene.addCharacter(log, x, y);
             spawnedIds.current.add(log.id);
         });
     }, [logs, characters, sceneReady]);
