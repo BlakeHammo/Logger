@@ -18,6 +18,11 @@ function App() {
     filterCategories, toggleCategoryFilter,
     filterRatingMin,  setFilterRatingMin,
     filterRatingMax,  setFilterRatingMax,
+    filterMoodMin,    setFilterMoodMin,
+    filterMoodMax,    setFilterMoodMax,
+    filterSolo,       setFilterSolo,
+    filterDurationMin,     setFilterDurationMin,
+    filterDurationMinUnit, setFilterDurationMinUnit,
     filterDateFrom,   setFilterDateFrom,
     filterDateTo,     setFilterDateTo,
     filteredLogs,
@@ -137,12 +142,17 @@ function App() {
           {activeTab === 'entries' && (
             <div>
               <FilterBar
-                filterTitle={filterTitle}           setFilterTitle={setFilterTitle}
-                filterCategories={filterCategories} toggleCategoryFilter={toggleCategoryFilter}
-                filterRatingMin={filterRatingMin}   setFilterRatingMin={setFilterRatingMin}
-                filterRatingMax={filterRatingMax}   setFilterRatingMax={setFilterRatingMax}
-                filterDateFrom={filterDateFrom}     setFilterDateFrom={setFilterDateFrom}
-                filterDateTo={filterDateTo}         setFilterDateTo={setFilterDateTo}
+                filterTitle={filterTitle}               setFilterTitle={setFilterTitle}
+                filterCategories={filterCategories}     toggleCategoryFilter={toggleCategoryFilter}
+                filterRatingMin={filterRatingMin}       setFilterRatingMin={setFilterRatingMin}
+                filterRatingMax={filterRatingMax}       setFilterRatingMax={setFilterRatingMax}
+                filterMoodMin={filterMoodMin}           setFilterMoodMin={setFilterMoodMin}
+                filterMoodMax={filterMoodMax}           setFilterMoodMax={setFilterMoodMax}
+                filterSolo={filterSolo}                 setFilterSolo={setFilterSolo}
+                filterDurationMin={filterDurationMin}   setFilterDurationMin={setFilterDurationMin}
+                filterDurationMinUnit={filterDurationMinUnit} setFilterDurationMinUnit={setFilterDurationMinUnit}
+                filterDateFrom={filterDateFrom}         setFilterDateFrom={setFilterDateFrom}
+                filterDateTo={filterDateTo}             setFilterDateTo={setFilterDateTo}
                 isFilterActive={isFilterActive}
                 clearFilters={clearFilters}
                 filteredCount={filteredLogs.length}
@@ -166,10 +176,22 @@ function App() {
           )}
 
           {activeTab === 'details' && (
-            <CharacterDetails
-              selectedCharacter={selectedCharacter}
-              onClose={() => { setSelectedCharacter(null); setHighlightedLogId(null); }}
-            />
+            <>
+              <CharacterDetails
+                selectedCharacter={selectedCharacter}
+                onClose={() => { setSelectedCharacter(null); setHighlightedLogId(null); }}
+              />
+              <button
+                onClick={clearLogs}
+                style={{
+                  marginTop: 'auto', background: '#1a0000', color: '#ff4444',
+                  border: '1px solid #550000', padding: '8px', cursor: 'pointer',
+                  fontWeight: 'bold', borderRadius: '4px',
+                }}
+              >
+                Reset Village
+              </button>
+            </>
           )}
 
           {activeTab === 'calendar' && (
@@ -185,16 +207,6 @@ function App() {
             />
           )}
 
-          {/* RESET BUTTON — always visible */}
-          <button
-            onClick={clearLogs}
-            style={{
-              marginTop: 'auto', background: 'red', color: 'white',
-              border: 'none', padding: '8px', cursor: 'pointer', fontWeight: 'bold',
-            }}
-          >
-            Reset Village
-          </button>
         </div>
 
         {/* RESIZE HANDLE */}
