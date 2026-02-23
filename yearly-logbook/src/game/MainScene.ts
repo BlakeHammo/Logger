@@ -16,7 +16,6 @@ interface CharacterSprite extends Phaser.Physics.Arcade.Sprite {
 export default class MainScene extends Phaser.Scene {
   characters!: Phaser.Physics.Arcade.Group;
 
-  private nameLabels   = new Map<string, Phaser.GameObjects.Text>();
   private characterMap = new Map<string, CharacterSprite>();
 
   private onCharacterClickRef: ((id: string) => void) | null = null;
@@ -38,7 +37,6 @@ export default class MainScene extends Phaser.Scene {
 
   update(_time: number, delta: number) {
     this.runBoids(delta / 1000);
-    this.syncLabelPositions();
   }
 
   // ─── Texture generation ──────────────────────────────────────────────────────
@@ -92,7 +90,7 @@ export default class MainScene extends Phaser.Scene {
     sprite.setData('originalTint', config.color);
     sprite.setDepth(1);
 
-    // Scale: rating 1 → 0.5×, rating 5 → 0.9× — kept small for 300+ character scenes
+    // Scale: rating 1 → 0.45×, rating 5 → 0.85× — kept small for 300+ character scenes
     const targetScale = 0.35 + personality.rating * 0.1;
 
     // Spawn animation: pop in with a bouncy scale tween
@@ -105,18 +103,6 @@ export default class MainScene extends Phaser.Scene {
       ease:     'Back.easeOut',
     });
 
-    // Name label — always visible, subtle; brightens on hover
-    const shortTitle = log.title.length > 22 ? log.title.slice(0, 19) + '…' : log.title;
-    const label = this.add.text(x, y, shortTitle, {
-      fontSize:        '12px',
-      color:           '#ffffff',
-      stroke:          '#000000',
-      strokeThickness: 3,
-    });
-    label.setAlpha(0.75);
-    label.setOrigin(0.5, 1);
-    label.setDepth(2);
-    this.nameLabels.set(log.id, label);
     this.characterMap.set(log.id, sprite);
 
     // Initial velocity — angle varies so characters spread out on spawn
@@ -129,22 +115,13 @@ export default class MainScene extends Phaser.Scene {
     // Interactivity
     sprite.setInteractive();
     sprite.on('pointerdown', () => this.onCharacterClickRef?.(sprite.logId));
-    sprite.on('pointerover', () => {
-      label.setAlpha(1);
-      this.onCharacterHoverRef?.(sprite.logId);
-    });
-    sprite.on('pointerout', () => {
-      label.setAlpha(0.75);
-      this.onCharacterHoverRef?.(null);
-    });
+    sprite.on('pointerover', () => this.onCharacterHoverRef?.(sprite.logId));
+    sprite.on('pointerout',  () => this.onCharacterHoverRef?.(null));
   }
 
   clearAllCharacters() {
     if (!this.characters) return;
 
-    // Destroy name labels
-    this.nameLabels.forEach(label => label.destroy());
-    this.nameLabels.clear();
     this.characterMap.clear();
     this.highlightedCharacter = null;
 
@@ -274,29 +251,25 @@ export default class MainScene extends Phaser.Scene {
       let newVy = body.velocity.y + fy * dt;
       const speed = Math.sqrt(newVx * newVx + newVy * newVy);
 
+      const minSpeed = 12 + recencyBoost * 0.5;
       if (speed > maxSpeed) {
         newVx = (newVx / speed) * maxSpeed;
         newVy = (newVy / speed) * maxSpeed;
-      } else if (speed < 8) {
-        // If nearly stationary, give a gentle random nudge so nobody freezes
+      } else if (speed < minSpeed && speed > 0) {
+        // Clamp to minimum speed in the current direction — no random snapping
+        newVx = (newVx / speed) * minSpeed;
+        newVy = (newVy / speed) * minSpeed;
+      } else if (speed === 0) {
+        // Exact zero only: pick a direction once
         const a = Math.random() * Math.PI * 2;
-        newVx = Math.cos(a) * (22 + recencyBoost);
-        newVy = Math.sin(a) * (22 + recencyBoost);
+        newVx = Math.cos(a) * minSpeed;
+        newVy = Math.sin(a) * minSpeed;
       }
 
       sprite.setVelocity(newVx, newVy);
 
       // Flip sprite to face direction of travel
       if (Math.abs(newVx) > 4) sprite.setFlipX(newVx < 0);
-    });
-  }
-
-  private syncLabelPositions() {
-    this.nameLabels.forEach((label, logId) => {
-      const sprite = this.characterMap.get(logId);
-      if (sprite?.active) {
-        label.setPosition(sprite.x, sprite.y - sprite.displayHeight / 2 - 3);
-      }
     });
   }
 
@@ -307,8 +280,6 @@ export default class MainScene extends Phaser.Scene {
     if (this.highlightedCharacter) {
       const orig = this.highlightedCharacter.getData('originalTint');
       this.highlightedCharacter.setTint(orig);
-      const prevLabel = this.nameLabels.get(this.highlightedCharacter.logId);
-      if (prevLabel) prevLabel.setAlpha(0.75);
       this.highlightedCharacter = null;
     }
 
@@ -318,8 +289,6 @@ export default class MainScene extends Phaser.Scene {
     if (found) {
       found.setTint(0xffff00);
       this.highlightedCharacter = found;
-      const label = this.nameLabels.get(logId);
-      if (label) label.setAlpha(1);
     }
   }
 
@@ -329,8 +298,6 @@ export default class MainScene extends Phaser.Scene {
       const sprite  = child as CharacterSprite;
       const visible = visibleIds === null || visibleIds.has(sprite.logId);
       sprite.setAlpha(visible ? 1 : 0.12);
-      const label = this.nameLabels.get(sprite.logId);
-      if (label) label.setAlpha(visible ? 0.75 : 0.05);
     });
   }
 
