@@ -28,3 +28,5 @@ npm run dev
 ## Status
 
 This project is under active development. Some features may be broken, missing, or change significantly between updates.
+
+Currently, main functionality exists, working on polish and additional features
